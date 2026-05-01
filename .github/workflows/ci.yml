@@ -1,7 +1,13 @@
 name: CI
 
 on:
-  workflow_dispatch: 
+  workflow_dispatch:
+    inputs:
+      run_performance:
+        description: Run optional k6 performance tests
+        required: false
+        default: false
+        type: boolean
   push:
     branches:
       - main
@@ -50,4 +56,36 @@ jobs:
         with:
           name: functional-test-report
           path: reports/api-tests
+          if-no-files-found: warn
+
+  performance:
+    if: github.event_name == 'workflow_dispatch' && inputs.run_performance
+    runs-on: ubuntu-latest
+    continue-on-error: true
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Setup k6
+        uses: grafana/setup-k6-action@v1
+
+      - name: Run performance tests
+        run: npm run test:performance
+
+      - name: Upload performance report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: performance-test-report
+          path: reports/performance
           if-no-files-found: warn
