@@ -1,0 +1,28 @@
+# Dependencias locais
+node_modules/
+
+# Ferramentas e espelhos locais
+# A pasta wiki/ e a fonte oficial da documentacao e deve permanecer versionada.
+# A pasta .wiki-publish/ e apenas um clone auxiliar para publicar a GitHub Wiki.
+.codex/
+.wiki-publish/
+
+# Arquivos de ambiente
+.env
+.env.*
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Relatorios de teste
+reports/
+mochawesome-report/
+mochawesome.json
+
+# Arquivos do sistema operacional
+.DS_Store
+Thumbs.db
+desktop.ini

@@ -1,0 +1,1293 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Assistente de Triagem Medica API",
+    "version": "1.0.0",
+    "description": "API REST para triagem medica com Express, JWT e persistencia em memoria."
+  },
+  "servers": [
+    {
+      "url": "http://localhost:3000/api",
+      "description": "Servidor local"
+    }
+  ],
+  "tags": [
+    { "name": "Health" },
+    { "name": "Auth" },
+    { "name": "Users" },
+    { "name": "Patients" },
+    { "name": "Doctors" },
+    { "name": "Symptoms" },
+    { "name": "Triages" },
+    { "name": "Appointments" }
+  ],
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    },
+    "schemas": {
+      "ErrorBody": {
+        "type": "object",
+        "properties": {
+          "success": { "type": "boolean", "example": false },
+          "error": {
+            "type": "object",
+            "properties": {
+              "code": { "type": "string", "example": "VALIDATION_ERROR" },
+              "message": { "type": "string", "example": "Campos obrigatorios ausentes." },
+              "details": {
+                "nullable": true,
+                "oneOf": [
+                  { "type": "object", "additionalProperties": true },
+                  { "type": "array", "items": { "type": "string" } }
+                ]
+              }
+            }
+          }
+        }
+      },
+      "HealthResponse": {
+        "type": "object",
+        "properties": {
+          "success": { "type": "boolean", "example": true },
+          "message": { "type": "string", "example": "API operacional." },
+          "data": {
+            "type": "object",
+            "properties": {
+              "status": { "type": "string", "example": "ok" },
+              "timestamp": { "type": "string", "format": "date-time" }
+            }
+          }
+        }
+      },
+      "ClinicUser": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "example": "1" },
+          "name": { "type": "string", "example": "Maria Silva" },
+          "email": { "type": "string", "format": "email", "example": "maria@clinica.local" },
+          "role": { "type": "string", "enum": ["ADMIN", "RECEPTIONIST", "DOCTOR"] },
+          "active": { "type": "boolean", "example": true },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "updatedAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "Patient": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "example": "1" },
+          "name": { "type": "string", "example": "Joao da Costa" },
+          "document": { "type": "string", "example": "12345678900" },
+          "birthDate": { "type": "string", "format": "date", "example": "1990-05-10" },
+          "phone": { "type": "string", "example": "+5511999999999" },
+          "email": { "type": "string", "nullable": true, "example": "joao@email.com" },
+          "notes": { "type": "string", "nullable": true, "example": "Paciente alergico a dipirona." },
+          "active": { "type": "boolean", "example": true },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "updatedAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "Doctor": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "example": "1" },
+          "name": { "type": "string", "example": "Dra. Ana Souza" },
+          "crm": { "type": "string", "example": "CRM-SP-123456" },
+          "specialty": { "type": "string", "example": "Cardiologia" },
+          "phone": { "type": "string", "nullable": true, "example": "+5511988888888" },
+          "email": { "type": "string", "nullable": true, "example": "ana@clinica.local" },
+          "active": { "type": "boolean", "example": true },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "updatedAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "Symptom": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "example": "1" },
+          "name": { "type": "string", "example": "Dor no peito" },
+          "description": { "type": "string", "nullable": true, "example": "Dor opressiva no centro do peito." },
+          "severity": { "type": "string", "enum": ["LOW", "MEDIUM", "HIGH", "CRITICAL"] },
+          "specialty": { "type": "string", "example": "Cardiologia" },
+          "active": { "type": "boolean", "example": true },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "updatedAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "Triage": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "example": "1" },
+          "patientId": { "type": "string", "example": "1" },
+          "symptomIds": {
+            "type": "array",
+            "items": { "type": "string" },
+            "example": ["1", "2"]
+          },
+          "symptomsSnapshot": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/Symptom" }
+          },
+          "suggestedSpecialty": { "type": "string", "example": "Cardiologia" },
+          "priority": { "type": "string", "enum": ["LOW", "MEDIUM", "HIGH", "CRITICAL"] },
+          "notes": { "type": "string", "nullable": true, "example": "Paciente com dor recorrente ha 2 dias." },
+          "createdByUserId": { "type": "string", "example": "1" },
+          "createdAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "SpecialtyConsultResult": {
+        "type": "object",
+        "properties": {
+          "suggestedSpecialty": { "type": "string", "example": "Cardiologia" },
+          "priority": { "type": "string", "enum": ["LOW", "MEDIUM", "HIGH", "CRITICAL"] },
+          "symptomsConsidered": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/Symptom" }
+          }
+        }
+      },
+      "Appointment": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "example": "1" },
+          "patientId": { "type": "string", "example": "1" },
+          "doctorId": { "type": "string", "example": "1" },
+          "triageId": { "type": "string", "nullable": true, "example": "1" },
+          "scheduledAt": { "type": "string", "format": "date-time" },
+          "status": { "type": "string", "example": "SCHEDULED" },
+          "notes": { "type": "string", "nullable": true, "example": "Consulta preferencial pela manha." },
+          "createdByUserId": { "type": "string", "example": "1" },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "updatedAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "LoginRequest": {
+        "type": "object",
+        "required": ["email", "password"],
+        "properties": {
+          "email": { "type": "string", "format": "email", "example": "admin@clinica.local" },
+          "password": { "type": "string", "example": "Admin@123" }
+        }
+      },
+      "LoginResponse": {
+        "type": "object",
+        "properties": {
+          "success": { "type": "boolean", "example": true },
+          "message": { "type": "string", "example": "Login realizado com sucesso." },
+          "data": {
+            "type": "object",
+            "properties": {
+              "token": { "type": "string", "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." },
+              "user": { "$ref": "#/components/schemas/ClinicUser" }
+            }
+          }
+        }
+      },
+      "CreateUserRequest": {
+        "type": "object",
+        "required": ["name", "email", "password", "role"],
+        "properties": {
+          "name": { "type": "string", "example": "Recepcao 1" },
+          "email": { "type": "string", "format": "email", "example": "recepcao1@clinica.local" },
+          "password": { "type": "string", "example": "Senha@123" },
+          "role": { "type": "string", "enum": ["ADMIN", "RECEPTIONIST", "DOCTOR"] },
+          "active": { "type": "boolean", "example": true }
+        }
+      },
+      "UpdateUserRequest": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string" },
+          "email": { "type": "string", "format": "email" },
+          "password": { "type": "string" },
+          "role": { "type": "string", "enum": ["ADMIN", "RECEPTIONIST", "DOCTOR"] },
+          "active": { "type": "boolean" }
+        }
+      },
+      "CreatePatientRequest": {
+        "type": "object",
+        "required": ["name", "document", "birthDate", "phone"],
+        "properties": {
+          "name": { "type": "string", "example": "Joao da Costa" },
+          "document": { "type": "string", "example": "12345678900" },
+          "birthDate": { "type": "string", "format": "date", "example": "1990-05-10" },
+          "phone": { "type": "string", "example": "+5511999999999" },
+          "email": { "type": "string", "format": "email" },
+          "notes": { "type": "string" }
+        }
+      },
+      "UpdatePatientRequest": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string" },
+          "document": { "type": "string" },
+          "birthDate": { "type": "string", "format": "date" },
+          "phone": { "type": "string" },
+          "email": { "type": "string", "format": "email" },
+          "notes": { "type": "string" },
+          "active": { "type": "boolean" }
+        }
+      },
+      "CreateDoctorRequest": {
+        "type": "object",
+        "required": ["name", "crm", "specialty"],
+        "properties": {
+          "name": { "type": "string", "example": "Dra. Ana Souza" },
+          "crm": { "type": "string", "example": "CRM-SP-123456" },
+          "specialty": { "type": "string", "example": "Cardiologia" },
+          "phone": { "type": "string" },
+          "email": { "type": "string", "format": "email" }
+        }
+      },
+      "UpdateDoctorRequest": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string" },
+          "crm": { "type": "string" },
+          "specialty": { "type": "string" },
+          "phone": { "type": "string" },
+          "email": { "type": "string", "format": "email" },
+          "active": { "type": "boolean" }
+        }
+      },
+      "CreateSymptomRequest": {
+        "type": "object",
+        "required": ["name", "severity", "specialty"],
+        "properties": {
+          "name": { "type": "string", "example": "Dor no peito" },
+          "description": { "type": "string", "example": "Dor opressiva no centro do peito." },
+          "severity": { "type": "string", "enum": ["LOW", "MEDIUM", "HIGH", "CRITICAL"] },
+          "specialty": { "type": "string", "example": "Cardiologia" }
+        }
+      },
+      "UpdateSymptomRequest": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string" },
+          "description": { "type": "string" },
+          "severity": { "type": "string", "enum": ["LOW", "MEDIUM", "HIGH", "CRITICAL"] },
+          "specialty": { "type": "string" },
+          "active": { "type": "boolean" }
+        }
+      },
+      "SpecialtyConsultRequest": {
+        "type": "object",
+        "required": ["symptomIds"],
+        "properties": {
+          "symptomIds": {
+            "type": "array",
+            "items": { "type": "string" },
+            "example": ["1", "2"]
+          }
+        }
+      },
+      "CreateTriageRequest": {
+        "type": "object",
+        "required": ["patientId", "symptomIds"],
+        "properties": {
+          "patientId": { "type": "string", "example": "1" },
+          "symptomIds": {
+            "type": "array",
+            "items": { "type": "string" },
+            "example": ["1", "2"]
+          },
+          "notes": { "type": "string", "example": "Paciente relata tontura e suor frio." }
+        }
+      },
+      "CreateAppointmentRequest": {
+        "type": "object",
+        "required": ["patientId", "doctorId", "scheduledAt"],
+        "properties": {
+          "patientId": { "type": "string", "example": "1" },
+          "doctorId": { "type": "string", "example": "1" },
+          "triageId": { "type": "string", "example": "1" },
+          "scheduledAt": { "type": "string", "format": "date-time", "example": "2026-04-23T10:00:00.000Z" },
+          "notes": { "type": "string", "example": "Paciente prefere horario da manha." }
+        }
+      },
+      "ClinicUserResponse": {
+        "type": "object",
+        "properties": {
+          "success": { "type": "boolean", "example": true },
+          "message": { "type": "string", "nullable": true, "example": "Usuario criado com sucesso." },
+          "data": { "$ref": "#/components/schemas/ClinicUser" }
+        }
+      },
+      "ClinicUserListResponse": {
+        "type": "object",
+        "properties": {
+          "success": { "type": "boolean", "example": true },
+          "message": { "type": "string", "nullable": true, "example": null },
+          "data": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/ClinicUser" }
+          }
+        }
+      },
+      "PatientResponse": {
+        "type": "object",
+        "properties": {
+          "success": { "type": "boolean", "example": true },
+          "message": { "type": "string", "nullable": true, "example": "Paciente criado com sucesso." },
+          "data": { "$ref": "#/components/schemas/Patient" }
+        }
+      },
+      "PatientListResponse": {
+        "type": "object",
+        "properties": {
+          "success": { "type": "boolean", "example": true },
+          "message": { "type": "string", "nullable": true, "example": null },
+          "data": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/Patient" }
+          }
+        }
+      },
+      "DoctorResponse": {
+        "type": "object",
+        "properties": {
+          "success": { "type": "boolean", "example": true },
+          "message": { "type": "string", "nullable": true, "example": "Medico criado com sucesso." },
+          "data": { "$ref": "#/components/schemas/Doctor" }
+        }
+      },
+      "DoctorListResponse": {
+        "type": "object",
+        "properties": {
+          "success": { "type": "boolean", "example": true },
+          "message": { "type": "string", "nullable": true, "example": null },
+          "data": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/Doctor" }
+          }
+        }
+      },
+      "SymptomResponse": {
+        "type": "object",
+        "properties": {
+          "success": { "type": "boolean", "example": true },
+          "message": { "type": "string", "nullable": true, "example": "Sintoma criado com sucesso." },
+          "data": { "$ref": "#/components/schemas/Symptom" }
+        }
+      },
+      "SymptomListResponse": {
+        "type": "object",
+        "properties": {
+          "success": { "type": "boolean", "example": true },
+          "message": { "type": "string", "nullable": true, "example": null },
+          "data": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/Symptom" }
+          }
+        }
+      },
+      "TriageResponse": {
+        "type": "object",
+        "properties": {
+          "success": { "type": "boolean", "example": true },
+          "message": { "type": "string", "nullable": true, "example": "Triagem registrada com sucesso." },
+          "data": { "$ref": "#/components/schemas/Triage" }
+        }
+      },
+      "TriageListResponse": {
+        "type": "object",
+        "properties": {
+          "success": { "type": "boolean", "example": true },
+          "message": { "type": "string", "nullable": true, "example": null },
+          "data": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/Triage" }
+          }
+        }
+      },
+      "SpecialtyConsultResponse": {
+        "type": "object",
+        "properties": {
+          "success": { "type": "boolean", "example": true },
+          "message": { "type": "string", "nullable": true, "example": "Especialidade sugerida com sucesso." },
+          "data": { "$ref": "#/components/schemas/SpecialtyConsultResult" }
+        }
+      },
+      "AppointmentResponse": {
+        "type": "object",
+        "properties": {
+          "success": { "type": "boolean", "example": true },
+          "message": { "type": "string", "nullable": true, "example": "Consulta agendada com sucesso." },
+          "data": { "$ref": "#/components/schemas/Appointment" }
+        }
+      },
+      "AppointmentListResponse": {
+        "type": "object",
+        "properties": {
+          "success": { "type": "boolean", "example": true },
+          "message": { "type": "string", "nullable": true, "example": null },
+          "data": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/Appointment" }
+          }
+        }
+      }
+    },
+    "responses": {
+      "BadRequest": {
+        "description": "Requisicao invalida",
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/ErrorBody" }
+          }
+        }
+      },
+      "Unauthorized": {
+        "description": "Nao autenticado",
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/ErrorBody" }
+          }
+        }
+      },
+      "Forbidden": {
+        "description": "Acesso negado",
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/ErrorBody" }
+          }
+        }
+      },
+      "NotFound": {
+        "description": "Recurso nao encontrado",
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/ErrorBody" }
+          }
+        }
+      },
+      "Conflict": {
+        "description": "Conflito de negocio",
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/ErrorBody" }
+          }
+        }
+      },
+      "InternalError": {
+        "description": "Erro interno",
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/ErrorBody" }
+          }
+        }
+      }
+    }
+  },
+  "paths": {
+    "/health": {
+      "get": {
+        "tags": ["Health"],
+        "summary": "Verifica a saude da API",
+        "responses": {
+          "200": {
+            "description": "API operacional",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HealthResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/login": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Realiza login de usuario da clinica",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/LoginRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Login realizado",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/LoginResponse" }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "500": { "$ref": "#/components/responses/InternalError" }
+        }
+      }
+    },
+    "/users": {
+      "get": {
+        "tags": ["Users"],
+        "summary": "Lista usuarios da clinica",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Usuarios listados",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ClinicUserListResponse" }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" }
+        }
+      },
+      "post": {
+        "tags": ["Users"],
+        "summary": "Cria usuario da clinica",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/CreateUserRequest" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Usuario criado",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ClinicUserResponse" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "409": { "$ref": "#/components/responses/Conflict" }
+        }
+      }
+    },
+    "/users/{id}": {
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "schema": { "type": "string" }
+        }
+      ],
+      "get": {
+        "tags": ["Users"],
+        "summary": "Busca usuario por id",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Usuario encontrado",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ClinicUserResponse" }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      },
+      "put": {
+        "tags": ["Users"],
+        "summary": "Atualiza usuario da clinica",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/UpdateUserRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Usuario atualizado",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ClinicUserResponse" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" }
+        }
+      },
+      "delete": {
+        "tags": ["Users"],
+        "summary": "Inativa usuario da clinica",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Usuario inativado",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ClinicUserResponse" }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/patients": {
+      "get": {
+        "tags": ["Patients"],
+        "summary": "Lista pacientes",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "name",
+            "in": "query",
+            "schema": { "type": "string" },
+            "description": "Filtra pacientes por nome parcial."
+          },
+          {
+            "name": "document",
+            "in": "query",
+            "schema": { "type": "string" },
+            "description": "Filtra pacientes por documento exato."
+          },
+          {
+            "name": "active",
+            "in": "query",
+            "schema": { "type": "boolean" },
+            "description": "Filtra pacientes por status ativo/inativo."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Pacientes listados",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/PatientListResponse" }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" }
+        }
+      },
+      "post": {
+        "tags": ["Patients"],
+        "summary": "Cria paciente",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/CreatePatientRequest" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Paciente criado",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/PatientResponse" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" }
+        }
+      }
+    },
+    "/patients/{id}": {
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "schema": { "type": "string" }
+        }
+      ],
+      "get": {
+        "tags": ["Patients"],
+        "summary": "Busca paciente por id",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Paciente encontrado",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/PatientResponse" }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      },
+      "put": {
+        "tags": ["Patients"],
+        "summary": "Atualiza paciente",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/UpdatePatientRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Paciente atualizado",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/PatientResponse" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      },
+      "delete": {
+        "tags": ["Patients"],
+        "summary": "Inativa paciente",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Paciente inativado",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/PatientResponse" }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/doctors": {
+      "get": {
+        "tags": ["Doctors"],
+        "summary": "Lista medicos",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "name",
+            "in": "query",
+            "schema": { "type": "string" },
+            "description": "Filtra medicos por nome parcial."
+          },
+          {
+            "name": "crm",
+            "in": "query",
+            "schema": { "type": "string" },
+            "description": "Filtra medicos por CRM exato."
+          },
+          {
+            "name": "specialty",
+            "in": "query",
+            "schema": { "type": "string" },
+            "description": "Filtra medicos por especialidade."
+          },
+          {
+            "name": "includeInactive",
+            "in": "query",
+            "schema": { "type": "boolean", "default": false },
+            "description": "Quando true, inclui medicos inativos no resultado."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Medicos listados",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/DoctorListResponse" }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" }
+        }
+      },
+      "post": {
+        "tags": ["Doctors"],
+        "summary": "Cria medico",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/CreateDoctorRequest" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Medico criado",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/DoctorResponse" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" }
+        }
+      }
+    },
+    "/doctors/{id}": {
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "schema": { "type": "string" }
+        }
+      ],
+      "get": {
+        "tags": ["Doctors"],
+        "summary": "Busca medico por id",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Medico encontrado",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/DoctorResponse" }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      },
+      "put": {
+        "tags": ["Doctors"],
+        "summary": "Atualiza medico",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/UpdateDoctorRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Medico atualizado",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/DoctorResponse" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      },
+      "delete": {
+        "tags": ["Doctors"],
+        "summary": "Inativa medico",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Medico inativado",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/DoctorResponse" }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/symptoms": {
+      "get": {
+        "tags": ["Symptoms"],
+        "summary": "Lista sintomas",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "name",
+            "in": "query",
+            "schema": { "type": "string" },
+            "description": "Filtra sintomas por nome parcial."
+          },
+          {
+            "name": "severity",
+            "in": "query",
+            "schema": { "type": "string", "enum": ["LOW", "MEDIUM", "HIGH", "CRITICAL"] },
+            "description": "Filtra sintomas por severidade."
+          },
+          {
+            "name": "specialty",
+            "in": "query",
+            "schema": { "type": "string" },
+            "description": "Filtra sintomas por especialidade."
+          },
+          {
+            "name": "includeInactive",
+            "in": "query",
+            "schema": { "type": "boolean", "default": false },
+            "description": "Quando true, inclui sintomas inativos no resultado."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Sintomas listados",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/SymptomListResponse" }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" }
+        }
+      },
+      "post": {
+        "tags": ["Symptoms"],
+        "summary": "Cria sintoma",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/CreateSymptomRequest" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Sintoma criado",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/SymptomResponse" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" }
+        }
+      }
+    },
+    "/symptoms/{id}": {
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "schema": { "type": "string" }
+        }
+      ],
+      "get": {
+        "tags": ["Symptoms"],
+        "summary": "Busca sintoma por id",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Sintoma encontrado",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/SymptomResponse" }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      },
+      "put": {
+        "tags": ["Symptoms"],
+        "summary": "Atualiza sintoma",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/UpdateSymptomRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Sintoma atualizado",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/SymptomResponse" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      },
+      "delete": {
+        "tags": ["Symptoms"],
+        "summary": "Inativa sintoma",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Sintoma inativado",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/SymptomResponse" }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/triages": {
+      "get": {
+        "tags": ["Triages"],
+        "summary": "Lista triagens",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Triagens listadas",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/TriageListResponse" }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" }
+        }
+      },
+      "post": {
+        "tags": ["Triages"],
+        "summary": "Registra uma triagem",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/CreateTriageRequest" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Triagem registrada",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/TriageResponse" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/triages/specialty-consult": {
+      "post": {
+        "tags": ["Triages"],
+        "summary": "Consulta especialidade sugerida com base nos sintomas",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/SpecialtyConsultRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Especialidade sugerida",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/SpecialtyConsultResponse" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/triages/{id}": {
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "schema": { "type": "string" }
+        }
+      ],
+      "get": {
+        "tags": ["Triages"],
+        "summary": "Busca triagem por id",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Triagem encontrada",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/TriageResponse" }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/appointments": {
+      "get": {
+        "tags": ["Appointments"],
+        "summary": "Lista agendamentos",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "patientId",
+            "in": "query",
+            "schema": { "type": "string" },
+            "description": "Filtra agendamentos por paciente."
+          },
+          {
+            "name": "doctorId",
+            "in": "query",
+            "schema": { "type": "string" },
+            "description": "Filtra agendamentos por medico."
+          },
+          {
+            "name": "triageId",
+            "in": "query",
+            "schema": { "type": "string" },
+            "description": "Filtra agendamentos por triagem."
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "schema": { "type": "string" },
+            "description": "Filtra agendamentos por status."
+          },
+          {
+            "name": "scheduledFrom",
+            "in": "query",
+            "schema": { "type": "string", "format": "date-time" },
+            "description": "Retorna agendamentos a partir desta data/hora."
+          },
+          {
+            "name": "scheduledTo",
+            "in": "query",
+            "schema": { "type": "string", "format": "date-time" },
+            "description": "Retorna agendamentos ate esta data/hora."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Agendamentos listados",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/AppointmentListResponse" }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" }
+        }
+      },
+      "post": {
+        "tags": ["Appointments"],
+        "summary": "Agenda consulta medica",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/CreateAppointmentRequest" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Consulta agendada",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/AppointmentResponse" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" }
+        }
+      }
+    },
+    "/appointments/{id}": {
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "schema": { "type": "string" }
+        }
+      ],
+      "get": {
+        "tags": ["Appointments"],
+        "summary": "Busca agendamento por id",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Agendamento encontrado",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/AppointmentResponse" }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    }
+  }
+}
