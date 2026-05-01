@@ -3,7 +3,6 @@
 ## Premissas de modelagem
 
 - Foi aplicada apenas a tecnica de tabela de decisao com base em particoes de equivalencia derivadas das regras de negocio.
-- Nao foi aplicada analise de valor limite.
 - Foram consideradas apenas combinacoes relevantes para a decisao da regra; combinacoes redundantes ou sem impacto decisorio foram omitidas.
 - Quando a regra descreve apenas controle de acesso, a tabela foi reduzida a particoes de perfil autorizado e nao autorizado.
 - Quando a regra nao explicita comportamento de consulta sem resultado, esse caso nao foi inferido como regra adicional.
@@ -654,12 +653,4 @@
   - Dado que o solicitante possui perfil ADMIN ou RECEPTIONIST
   - Quando consulta um agendamento por identificador inexistente
   - Entao o sistema deve retornar nao encontrado
-
----
-
-## Observacoes finais
-
-- A **US19** tem uma lacuna de especificacao para o comportamento quando nao houver conjunto valido de sintomas para calculo da prioridade; por isso foi mantido um caso explicito de ambiguidade.
-- As USs de **listagem e consulta** possuem poucas particoes porque o documento traz apenas regra de autorizacao.
-- Nas USs com exclusao logica, a decisao cobre tambem o efeito esperado nas operacoes subsequentes quando isso foi explicitado nas regras de negocio.
 

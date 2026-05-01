@@ -18,115 +18,40 @@ O objetivo dos testes e garantir que:
 
 ### CT01 - Criar usuario com perfil permitido e email unico
 
-**Objetivo**
+**Cenario em Gherkin**
 
-Comprovar que um administrador consegue cadastrar um novo usuario quando todas as regras obrigatorias sao atendidas.
-
-**Cenario resumido**
-
-- Perfil solicitante: `ADMIN`
-- Campos obrigatorios: completos
-- Role informado: permitido
-- Email: unico
-
-**Resultado esperado**
-
-O sistema deve criar o usuario com e-mail normalizado e senha armazenada em hash.
-
-**Leitura de negocio**
-
-Este caso representa o fluxo principal esperado do produto para liberar novos acessos com seguranca e consistencia.
+- Dado que o solicitante possui perfil ADMIN
+- Quando informa name, email, password e role permitido com email unico
+- Entao o sistema deve criar o usuario com email normalizado e senha persistida em hash
 
 ### CT02 - Rejeitar cadastro quando o solicitante nao e ADMIN
 
-**Objetivo**
+**Cenario em Gherkin**
 
-Validar que o gerenciamento de usuarios e restrito ao perfil correto.
-
-**Cenario resumido**
-
-- Perfil solicitante: nao `ADMIN`
-- Campos obrigatorios: completos
-- Role informado: permitido
-- Email: unico
-
-**Resultado esperado**
-
-O sistema deve rejeitar a operacao por falta de permissao.
-
-**Leitura de negocio**
-
-Este caso reforca a separacao de responsabilidades e evita que perfis indevidos criem acessos administrativos ou operacionais.
+- Dado que o solicitante nao possui perfil ADMIN
+- Quando tenta cadastrar um usuario da clinica
+- Entao o sistema deve rejeitar a operacao por autorizacao
 
 ### CT03 - Rejeitar cadastro com campos obrigatorios incompletos
 
-**Objetivo**
+**Cenario em Gherkin**
 
-Garantir que a API nao aceite criacao de usuario com dados essenciais ausentes.
-
-**Cenario resumido**
-
-- Perfil solicitante: `ADMIN`
-- Campos obrigatorios: incompletos
-- Role informado: permitido
-- Email: unico
-
-**Resultado esperado**
-
-O sistema deve rejeitar a criacao por falha de obrigatoriedade.
-
-**Leitura de negocio**
-
-Este caso protege a qualidade cadastral e reduz falhas operacionais decorrentes de registros incompletos.
+- Dado que o solicitante possui perfil ADMIN
+- Quando envia o cadastro sem todos os campos obrigatorios
+- Entao o sistema deve rejeitar a criacao
 
 ### CT04 - Rejeitar cadastro com role fora do dominio permitido
 
-**Objetivo**
+**Cenario em Gherkin**
 
-Confirmar que apenas os perfis previstos pelo sistema podem ser utilizados no cadastro de usuarios.
-
-**Cenario resumido**
-
-- Perfil solicitante: `ADMIN`
-- Campos obrigatorios: completos
-- Role informado: nao permitido
-- Email: unico
-
-**Resultado esperado**
-
-O sistema deve rejeitar a criacao por perfil invalido.
-
-**Leitura de negocio**
-
-Este caso garante previsibilidade do modelo de autorizacao e evita a criacao de perfis arbitrarios fora das regras da aplicacao.
+- Dado que o solicitante possui perfil ADMIN
+- Quando informa um role fora de ADMIN, RECEPTIONIST ou DOCTOR
+- Entao o sistema deve rejeitar a criacao
 
 ### CT05 - Rejeitar cadastro com email ja existente
 
-**Objetivo**
+**Cenario em Gherkin**
 
-Assegurar que o identificador de acesso do usuario seja unico na base.
-
-**Cenario resumido**
-
-- Perfil solicitante: `ADMIN`
-- Campos obrigatorios: completos
-- Role informado: permitido
-- Email: duplicado
-
-**Resultado esperado**
-
-O sistema deve rejeitar a criacao por duplicidade de e-mail.
-
-**Leitura de negocio**
-
-Este caso evita ambiguidade de login, reduz risco de conflitos de identidade e melhora a governanca de acessos.
-
-## Resumo executivo
-
-Os casos da US01 demonstram que o cadastro de usuarios segue tres pilares principais:
-
-- autorizacao correta para quem pode executar a acao
-- validacao consistente dos dados informados
-- seguranca na criacao da conta e no controle de identidade
-
-Esse conjunto oferece uma leitura objetiva de que o fluxo de onboarding de usuarios esta preparado para um contexto clinico com controle minimo de acesso.
+- Dado que o solicitante possui perfil ADMIN
+- Quando informa email que ja existe no sistema
+- Entao o sistema deve rejeitar a criacao

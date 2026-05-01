@@ -1,5 +1,3 @@
-# Casos de Teste
-
 Esta pagina organiza a estrutura dos casos de teste da wiki por epico e por user story.
 O detalhamento dos cenarios modelados por tabela de decisao esta em [Tabela de Decisao das User Stories](Tabela-de-Decisao-US).
 
