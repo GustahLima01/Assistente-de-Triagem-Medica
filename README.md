@@ -20,16 +20,27 @@ Permitir que usuarios autenticados da clinica realizem:
 - Express
 - JWT com `jsonwebtoken`
 - Swagger UI com `swagger-ui-express`
+- OpenAPI
 - Mocha
 - Supertest
 - Chai
 - Mochawesome
+- K6
+- GitHub Actions
 - banco de dados em memoria
 
 ## Estrutura
 
 ```text
+.github/
+  workflows/
+    ci.yml
+package.json
+package-lock.json
+README.md
 src/
+  app.js
+  server.js
   controllers/
   data/
   middlewares/
@@ -46,6 +57,8 @@ tests/
   fixtures/
   helpers/
   patients/
+  performance/
+    lib/
   services/
   symptoms/
   triages/
@@ -89,12 +102,11 @@ Comandos disponiveis:
 npm run test:unit
 npm run test:functional
 npm run test:functional:report
-```
-
-Base inicial para performance com K6:
-
-```bash
 npm run test:performance
+npm run test:performance:auth-login
+npm run test:performance:triage-specialty-consult
+npm run test:performance:appointments-create
+npm run test:performance:reception-journey
 ```
 
 A suite atual cobre testes unitarios para:
@@ -189,7 +201,6 @@ k6 run tests/performance/reception-journey.k6.js -e BASE_URL=http://localhost:30
 Observacoes da automacao:
 
 - existe 1 caso funcional marcado como pendente por lacuna de especificacao na wiki: `US19 CT03`
-- existe 1 bug conhecido exposto pela automacao: a edicao de sintoma aceita remover `specialty`, contrariando `US11 CT04`
 
 Servidor padrao:
 
