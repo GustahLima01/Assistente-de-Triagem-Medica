@@ -9,7 +9,12 @@
     "test": "npm run test:unit && npm run test:functional",
     "test:unit": "mocha \"tests/{services,utils}/**/*.test.js\"",
     "test:functional": "mocha --require tests/helpers/testSetup.js \"tests/{auth,users,patients,doctors,symptoms,triages,appointments}/**/*.test.js\"",
-    "test:functional:report": "mocha --require tests/helpers/testSetup.js \"tests/{auth,users,patients,doctors,symptoms,triages,appointments}/**/*.test.js\" --reporter mochawesome --reporter-options reportDir=reports/api-tests,reportFilename=index,quiet=true,html=true,json=true"
+    "test:functional:report": "mocha --require tests/helpers/testSetup.js \"tests/{auth,users,patients,doctors,symptoms,triages,appointments}/**/*.test.js\" --reporter mochawesome --reporter-options reportDir=reports/api-tests,reportFilename=index,quiet=true,html=true,json=true",
+    "test:performance": "node tests/performance/run-performance.js",
+    "test:performance:auth-login": "k6 run tests/performance/auth-login.k6.js",
+    "test:performance:triage-specialty-consult": "k6 run tests/performance/triage-specialty-consult.k6.js",
+    "test:performance:appointments-create": "k6 run tests/performance/appointments-create.k6.js",
+    "test:performance:reception-journey": "k6 run tests/performance/reception-journey.k6.js"
   },
   "keywords": [
     "express",

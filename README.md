@@ -91,6 +91,12 @@ npm run test:functional
 npm run test:functional:report
 ```
 
+Base inicial para performance com K6:
+
+```bash
+npm run test:performance
+```
+
 A suite atual cobre testes unitarios para:
 
 - `src/services/appointmentService.js`
@@ -118,6 +124,67 @@ Relatorio funcional:
 
 - HTML: `reports/api-tests/index.html`
 - JSON: `reports/api-tests/index.json`
+
+Estrutura de performance:
+
+- `tests/performance/auth-login.k6.js`
+- `tests/performance/triage-specialty-consult.k6.js`
+- `tests/performance/appointments-create.k6.js`
+- `tests/performance/reception-journey.k6.js`
+- `tests/performance/lib/`
+
+## Testes de Performance com K6
+
+Os roteiros de performance ficam em:
+
+- `tests/performance/auth-login.k6.js`
+- `tests/performance/triage-specialty-consult.k6.js`
+- `tests/performance/appointments-create.k6.js`
+- `tests/performance/reception-journey.k6.js`
+
+Escopo inicial implementado:
+
+- `auth-login.k6.js`: mede autenticacao isolada.
+- `triage-specialty-consult.k6.js`: mede a decisao de especialidade com massa preparada no setup.
+- `appointments-create.k6.js`: mede a criacao de agendamento com dependencias preparadas no setup.
+- `reception-journey.k6.js`: mede a jornada da recepcao com login, cadastro de paciente, consulta de especialidade, triagem e agendamento.
+
+Os scripts compartilham utilitarios em `tests/performance/lib/` para configuracao, payloads, chamadas HTTP e relatorios.
+
+Relatorios gerados por execucao:
+
+- `reports/performance/*.txt`
+- `reports/performance/*.json`
+- `reports/performance/*.html`
+
+Cada script gera seus artefatos automaticamente via `handleSummary`.
+
+Variaveis de ambiente suportadas pelo script:
+
+- `BASE_URL`: URL base da API. Padrao `http://localhost:3000`
+- `ADMIN_EMAIL`: usuario admin para bootstrap. Padrao `admin@clinica.local`
+- `ADMIN_PASSWORD`: senha admin para bootstrap. Padrao `Admin@123`
+- `THINK_TIME_MS`: pausa entre iteracoes para simular ritmo de uso. Padrao `0`
+- `TARGET_VUS`: sobrescreve a carga padrao do script executado
+- `RAMP_UP_DURATION`: padrao `10s`
+- `STEADY_DURATION`: padrao `20s`
+- `RAMP_DOWN_DURATION`: padrao `10s`
+
+Exemplos de execucao:
+
+```bash
+npm run test:performance
+npm run test:performance:auth-login
+npm run test:performance:triage-specialty-consult
+npm run test:performance:appointments-create
+npm run test:performance:reception-journey
+```
+
+Exemplo com parametrizacao:
+
+```bash
+k6 run tests/performance/reception-journey.k6.js -e BASE_URL=http://localhost:3000 -e TARGET_VUS=5 -e THINK_TIME_MS=250
+```
 
 Observacoes da automacao:
 
