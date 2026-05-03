@@ -378,11 +378,9 @@ Com base nos requisitos funcionais identificados para o Assistente de Triagem Me
   - RN55. Apenas usuarios com perfil `ADMIN` ou `RECEPTIONIST` podem acessar agendamentos.
   - RN82. Os status de agendamento devem ser apresentados ao usuario em PT-BR nas consultas e listagens.
   - RN83. A persistencia pode manter valores internos padronizados, desde que a camada de apresentacao traduza os status exibidos.
-  - RN84. O mapeamento inicial de exibicao deve considerar `SCHEDULED` como `Agendada` e `CANCELLED` como `Cancelada`.
 - Criterios de aceite
   - Dado usuario autorizado, quando consultar agenda, entao a API deve listar agendamentos conforme os filtros aplicados.
   - Dado agendamento inexistente, quando consultar por ID, entao a API deve retornar nao encontrado.
-  - Dado agendamento com status conhecido, quando consultar listagem ou detalhe, entao o status exibido ao usuario deve estar traduzido em PT-BR.
 
 ## User story - US25
 

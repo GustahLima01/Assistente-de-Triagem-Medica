@@ -150,33 +150,6 @@ Este caso evita reabrir implicitamente um agendamento cujo ciclo ja foi encerrad
 - Quando o solicitante tenta editar seus dados
 - Entao o sistema deve rejeitar a edicao
 
-### CT06 - Rejeitar edicao por falta de permissao
-
-**Objetivo**
-
-Validar que o sistema executa corretamente o cenario previsto em ct06 para a US25.
-
-**Cenario resumido**
-
-- Perfil solicitante: Outro
-- Status atual do agendamento: SCHEDULED
-- Campo alterado: notes
-- Validade da nova composicao: Valida
-
-**Resultado esperado**
-
-Rejeitar a operacao por falta de permissao.
-
-**Leitura de negocio**
-
-Este caso reforca o controle de acesso sobre a manutencao da agenda.
-
-**Cenario em Gherkin**
-
-- Dado que o solicitante nao possui perfil autorizado
-- Quando tenta editar um agendamento
-- Entao o sistema deve rejeitar a operacao
-
 ### CT07 - Retornar nao encontrado ao editar agendamento inexistente
 
 **Objetivo**

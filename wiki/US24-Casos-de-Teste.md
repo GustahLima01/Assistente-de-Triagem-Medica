@@ -111,39 +111,12 @@ Este caso evita leitura incorreta da agenda e melhora a confiabilidade da consul
 - Quando consulta um agendamento por identificador inexistente
 - Entao o sistema deve retornar nao encontrado
 
-### CT05 - Exibir status traduzido em PT-BR na consulta da agenda
-
-**Objetivo**
-
-Validar que o sistema executa corretamente o cenario previsto em ct05 para a US24.
-
-**Cenario resumido**
-
-- Perfil solicitante: ADMIN ou RECEPTIONIST
-- Tipo de consulta: Listagem ou detalhe com status conhecido
-- Status interno consultado: SCHEDULED ou CANCELLED
-
-**Resultado esperado**
-
-Exibir o status do agendamento em PT-BR para o usuario.
-
-**Leitura de negocio**
-
-Este caso melhora a clareza operacional da agenda e evita expor termos tecnicos em ingles para o usuario final.
-
-**Cenario em Gherkin**
-
-- Dado que o solicitante possui perfil ADMIN ou RECEPTIONIST
-- Quando consulta agendamentos com status interno SCHEDULED ou CANCELLED
-- Entao o sistema deve exibir ao usuario os rotulos Agendada ou Cancelada em PT-BR
-
 ## Resumo executivo
 
 Os casos desta user story demonstram, de forma objetiva, como consultar os agendamentos realizados deve se comportar em cenarios de sucesso e de excecao.
 
 - cobertura do fluxo principal da funcionalidade
 - validacao das principais regras de negocio
-- clareza na exibicao de status de agendamento em PT-BR
 - previsibilidade de comportamento para consumidores da API e avaliadores funcionais
 
 Esse formato facilita a leitura por recrutadores, analistas e liderancas, sem perder a rastreabilidade com o backlog do produto.
