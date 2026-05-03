@@ -44,3 +44,5 @@ O detalhamento dos cenarios modelados por tabela de decisao esta em [Tabela de D
 - [US22 - Selecionar um medico compativel com a especialidade sugerida](US22-Casos-de-Teste)
 - [US23 - Validar conflito de horarios no agendamento](US23-Casos-de-Teste)
 - [US24 - Consultar os agendamentos realizados](US24-Casos-de-Teste)
+- [US25 - Editar ou reagendar uma consulta](US25-Casos-de-Teste)
+- [US26 - Cancelar uma consulta](US26-Casos-de-Teste)

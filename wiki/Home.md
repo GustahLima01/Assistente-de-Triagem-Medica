@@ -13,6 +13,7 @@ O Assistente de Triagem Medica foi concebido para apoiar o atendimento inicial d
 3. Os sintomas informados sao registrados.
 4. O sistema calcula a especialidade sugerida e a prioridade da triagem.
 5. A consulta e agendada com um medico compativel.
+6. A agenda pode ser consultada e, se necessario, o agendamento pode ser reagendado ou cancelado com rastreabilidade.
 
 ## Portfolio do Produto
 
@@ -21,7 +22,7 @@ O Assistente de Triagem Medica foi concebido para apoiar o atendimento inicial d
 | Acesso e seguranca | Controlar autenticacao e permissao por perfil | Garante uso seguro e coerente do sistema |
 | Cadastro operacional | Manter usuarios, pacientes, medicos e sintomas | Sustenta o fluxo da triagem com dados confiaveis |
 | Triagem assistida | Sugerir especialidade e prioridade com base nos sintomas | Apoia o encaminhamento inicial |
-| Agendamento | Conectar triagem e disponibilidade medica | Da continuidade ao atendimento |
+| Agendamento | Conectar triagem, disponibilidade medica e manutencao da agenda | Da continuidade ao atendimento com rastreabilidade |
 
 ## Mapa da Wiki
 
@@ -60,6 +61,8 @@ O Assistente de Triagem Medica foi concebido para apoiar o atendimento inicial d
     - [US22 - Selecionar um medico compativel com a especialidade sugerida](Casos-de-Teste#us22---selecionar-um-medico-compativel-com-a-especialidade-sugerida)
     - [US23 - Validar conflito de horarios no agendamento](Casos-de-Teste#us23---validar-conflito-de-horarios-no-agendamento)
     - [US24 - Consultar os agendamentos realizados](Casos-de-Teste#us24---consultar-os-agendamentos-realizados)
+    - [US25 - Editar ou reagendar uma consulta](Casos-de-Teste#us25---editar-ou-reagendar-uma-consulta)
+    - [US26 - Cancelar uma consulta](Casos-de-Teste#us26---cancelar-uma-consulta)
 ## Objetivo da Wiki
 
 Organizar a visao do produto, o fluxo principal e o backlog priorizado para a construcao evolutiva do MVP.
