@@ -145,32 +145,6 @@ Este caso garante que o cancelamento realmente devolva disponibilidade a agenda.
 - Quando um novo agendamento e solicitado para o mesmo medico e horario
 - Entao o sistema deve permitir a nova criacao sem conflito
 
-### CT06 - Exibir agendamento cancelado com status traduzido
-
-**Objetivo**
-
-Validar que o sistema executa corretamente o cenario previsto em ct06 para a US26.
-
-**Cenario resumido**
-
-- Perfil solicitante: ADMIN ou RECEPTIONIST
-- Status atual do agendamento: CANCELLED
-- Consulta posterior do registro: Sim
-
-**Resultado esperado**
-
-Exibir o registro consultado com status Cancelada em PT-BR.
-
-**Leitura de negocio**
-
-Este caso conecta o cancelamento com a experiencia de consulta da agenda, deixando o status compreensivel para o usuario final.
-
-**Cenario em Gherkin**
-
-- Dado que existe um agendamento cancelado
-- Quando ele e consultado na agenda
-- Entao o sistema deve permanecer exibindo o registro com status Cancelada em PT-BR
-
 ## Resumo executivo
 
 Os casos desta user story demonstram, de forma objetiva, como cancelar uma consulta deve se comportar em cenarios de sucesso e de excecao.

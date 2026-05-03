@@ -693,12 +693,12 @@
 
 ## US26 - Cancelar uma consulta
 
-| Entrada | Particoes | US26-CT01 | US26-CT02 | US26-CT03 | US26-CT04 | US26-CT05 | US26-CT06 |
-|---|---|---|---|---|---|---|---|
-| Perfil solicitante | ADMIN ou RECEPTIONIST / Outro | ADMIN ou RECEPTIONIST | Outro | ADMIN ou RECEPTIONIST | ADMIN ou RECEPTIONIST | ADMIN ou RECEPTIONIST | ADMIN ou RECEPTIONIST |
-| Status atual do agendamento | SCHEDULED / CANCELLED / Nao encontrado | SCHEDULED | SCHEDULED | Nao encontrado | CANCELLED | CANCELLED seguido de novo agendamento | CANCELLED |
-| Consulta posterior do registro | Sim / Nao | Sim | Nao aplicavel | Nao aplicavel | Nao aplicavel | Sim | Sim |
-| Decisao |  | Cancelar logicamente o agendamento e manter historico | Rejeitar por falta de permissao | Retornar nao encontrado | Rejeitar cancelamento duplicado | Permitir novo agendamento no mesmo horario apos cancelamento | Exibir agendamento cancelado com status traduzido |
+| Entrada | Particoes | US26-CT01 | US26-CT02 | US26-CT03 | US26-CT04 | US26-CT05 |
+|---|---|---|---|---|---|---|
+| Perfil solicitante | ADMIN ou RECEPTIONIST / Outro | ADMIN ou RECEPTIONIST | Outro | ADMIN ou RECEPTIONIST | ADMIN ou RECEPTIONIST | ADMIN ou RECEPTIONIST |
+| Status atual do agendamento | SCHEDULED / CANCELLED / Nao encontrado | SCHEDULED | SCHEDULED | Nao encontrado | CANCELLED | CANCELLED seguido de novo agendamento |
+| Consulta posterior do registro | Sim / Nao | Sim | Nao aplicavel | Nao aplicavel | Nao aplicavel | Sim |
+| Decisao |  | Cancelar logicamente o agendamento e manter historico | Rejeitar por falta de permissao | Retornar nao encontrado | Rejeitar cancelamento duplicado | Permitir novo agendamento no mesmo horario apos cancelamento |
 
 **Gherkin**
 
@@ -722,11 +722,6 @@
   - Dado que um agendamento do medico foi cancelado
   - Quando um novo agendamento e solicitado para o mesmo medico e horario
   - Entao o sistema deve permitir a nova criacao sem conflito
-- **US26-CT06**
-  - Dado que existe um agendamento cancelado
-  - Quando ele e consultado na agenda
-  - Entao o sistema deve permanecer exibindo o registro com status Cancelada em PT-BR
-
 ---
 
 ## Observacoes finais
