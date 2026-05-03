@@ -65,6 +65,7 @@ describe("appointmentService", () => {
       status: "SCHEDULED",
       notes: "retorno prioritario",
       createdByUserId: "u1",
+      updatedByUserId: null,
       createdAt: "2026-04-22T12:00:00.000Z",
       updatedAt: "2026-04-22T12:00:00.000Z"
     });
@@ -255,6 +256,146 @@ describe("appointmentService", () => {
       status: 400,
       code: "VALIDATION_ERROR",
       details: { field: "scheduledFrom" }
+    });
+  });
+
+  it("deve atualizar um agendamento agendado com novo medico, horario e observacoes", () => {
+    db.appointments.push({
+      id: "a1",
+      patientId: "p1",
+      doctorId: "d1",
+      triageId: "t1",
+      scheduledAt: "2026-05-01T12:30:00.000Z",
+      status: "SCHEDULED",
+      notes: "anterior",
+      createdByUserId: "u0",
+      updatedByUserId: null,
+      createdAt: "2026-04-20T10:00:00.000Z",
+      updatedAt: "2026-04-20T10:00:00.000Z"
+    });
+    getDoctorEntityByIdStub.withArgs("d2").returns({ id: "d2", active: true, specialty: "CARDIOLOGY" });
+    getTriageEntityByIdStub.withArgs("t1").returns({ id: "t1", patientId: "p1", suggestedSpecialty: "CARDIOLOGY" });
+
+    const result = appointmentService.updateAppointment(
+      "a1",
+      {
+        doctorId: "d2",
+        scheduledAt: "2026-05-02T09:30:00-03:00",
+        notes: "  remarcado  "
+      },
+      { id: "u2" }
+    );
+
+    assert.deepStrictEqual(result, {
+      id: "a1",
+      patientId: "p1",
+      doctorId: "d2",
+      triageId: "t1",
+      scheduledAt: "2026-05-02T12:30:00.000Z",
+      status: "SCHEDULED",
+      notes: "remarcado",
+      createdByUserId: "u0",
+      updatedByUserId: "u2",
+      createdAt: "2026-04-20T10:00:00.000Z",
+      updatedAt: "2026-04-22T12:00:00.000Z"
+    });
+  });
+
+  it("deve rejeitar edicao de agendamento cancelado", () => {
+    db.appointments.push({
+      id: "a1",
+      patientId: "p1",
+      doctorId: "d1",
+      triageId: null,
+      scheduledAt: "2026-05-01T12:30:00.000Z",
+      status: "CANCELLED"
+    });
+
+    const execute = () => appointmentService.updateAppointment("a1", { notes: "novo" }, { id: "u2" });
+
+    assertHttpError(execute, {
+      status: 409,
+      code: "APPOINTMENT_CANNOT_BE_EDITED"
+    });
+  });
+
+  it("deve rejeitar edicao com horario em conflito", () => {
+    db.appointments.push(
+      {
+        id: "a1",
+        patientId: "p1",
+        doctorId: "d1",
+        triageId: null,
+        scheduledAt: "2026-05-01T12:30:00.000Z",
+        status: "SCHEDULED"
+      },
+      {
+        id: "a2",
+        patientId: "p2",
+        doctorId: "d1",
+        triageId: null,
+        scheduledAt: "2026-05-02T12:30:00.000Z",
+        status: "SCHEDULED"
+      }
+    );
+    getDoctorEntityByIdStub.withArgs("d1").returns({ id: "d1", active: true, specialty: "CARDIOLOGY" });
+
+    const execute = () =>
+      appointmentService.updateAppointment("a1", { scheduledAt: "2026-05-02T09:30:00-03:00" }, { id: "u2" });
+
+    assertHttpError(execute, {
+      status: 409,
+      code: "APPOINTMENT_CONFLICT"
+    });
+  });
+
+  it("deve cancelar um agendamento agendado", () => {
+    db.appointments.push({
+      id: "a1",
+      patientId: "p1",
+      doctorId: "d1",
+      triageId: null,
+      scheduledAt: "2026-05-01T12:30:00.000Z",
+      status: "SCHEDULED",
+      notes: "consulta",
+      createdByUserId: "u0",
+      updatedByUserId: null,
+      createdAt: "2026-04-20T10:00:00.000Z",
+      updatedAt: "2026-04-20T10:00:00.000Z"
+    });
+
+    const result = appointmentService.cancelAppointment("a1", { id: "u3" });
+
+    assert.deepStrictEqual(result, {
+      id: "a1",
+      patientId: "p1",
+      doctorId: "d1",
+      triageId: null,
+      scheduledAt: "2026-05-01T12:30:00.000Z",
+      status: "CANCELLED",
+      notes: "consulta",
+      createdByUserId: "u0",
+      updatedByUserId: "u3",
+      createdAt: "2026-04-20T10:00:00.000Z",
+      updatedAt: "2026-04-22T12:00:00.000Z"
+    });
+  });
+
+  it("deve rejeitar cancelamento de agendamento ja cancelado", () => {
+    db.appointments.push({
+      id: "a1",
+      patientId: "p1",
+      doctorId: "d1",
+      triageId: null,
+      scheduledAt: "2026-05-01T12:30:00.000Z",
+      status: "CANCELLED"
+    });
+
+    const execute = () => appointmentService.cancelAppointment("a1", { id: "u3" });
+
+    assertHttpError(execute, {
+      status: 409,
+      code: "APPOINTMENT_ALREADY_CANCELLED"
     });
   });
 });

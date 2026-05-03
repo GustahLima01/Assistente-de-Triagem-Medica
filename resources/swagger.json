@@ -161,6 +161,7 @@
           "status": { "type": "string", "example": "SCHEDULED" },
           "notes": { "type": "string", "nullable": true, "example": "Consulta preferencial pela manha." },
           "createdByUserId": { "type": "string", "example": "1" },
+          "updatedByUserId": { "type": "string", "nullable": true, "example": "2" },
           "createdAt": { "type": "string", "format": "date-time" },
           "updatedAt": { "type": "string", "format": "date-time" }
         }
@@ -307,6 +308,30 @@
           "triageId": { "type": "string", "example": "1" },
           "scheduledAt": { "type": "string", "format": "date-time", "example": "2026-04-23T10:00:00.000Z" },
           "notes": { "type": "string", "example": "Paciente prefere horario da manha." }
+        }
+      },
+      "UpdateAppointmentRequest": {
+        "type": "object",
+        "example": {
+          "scheduledAt": "2026-06-12T15:00:00.000Z",
+          "notes": "Paciente solicitou reagendamento para o periodo da tarde."
+        },
+        "properties": {
+          "doctorId": {
+            "type": "string",
+            "description": "Informe apenas se desejar trocar o medico. Quando houver triageId no agendamento, o medico deve ter a mesma especialidade sugerida pela triagem."
+          },
+          "scheduledAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-06-12T15:00:00.000Z",
+            "description": "Novo horario da consulta em formato ISO 8601."
+          },
+          "notes": {
+            "type": "string",
+            "example": "Paciente solicitou reagendamento para o periodo da tarde.",
+            "description": "Observacoes da consulta."
+          }
         }
       },
       "ClinicUserResponse": {
@@ -1286,6 +1311,54 @@
           "401": { "$ref": "#/components/responses/Unauthorized" },
           "403": { "$ref": "#/components/responses/Forbidden" },
           "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      },
+      "put": {
+        "tags": ["Appointments"],
+        "summary": "Atualiza ou reagenda agendamento",
+        "description": "Permite alterar horario, observacoes e, opcionalmente, o medico. Se o agendamento possuir triageId, uma troca de medico deve respeitar a especialidade sugerida pela triagem.",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/UpdateAppointmentRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Agendamento atualizado",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/AppointmentResponse" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" }
+        }
+      },
+      "delete": {
+        "tags": ["Appointments"],
+        "summary": "Cancela agendamento",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Agendamento cancelado",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/AppointmentResponse" }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" }
         }
       }
     }

@@ -255,4 +255,194 @@ describe("Appointments API", () => {
 
     expectApiError(response, 404, "APPOINTMENT_NOT_FOUND");
   });
+
+  it("US25 CT01: permite editar observacoes de agendamento SCHEDULED", async () => {
+    const token = await authenticateAs("RECEPTIONIST");
+    const appointment = seedAppointment({}, getSeededAdmin());
+
+    const response = await authorizedRequest("put", `/api/appointments/${appointment.id}`, token).send({
+      notes: "  Retorno no fim da tarde  "
+    });
+
+    expect(response.status).to.equal(200);
+    expect(response.body.data.notes).to.equal("Retorno no fim da tarde");
+    expect(response.body.data.updatedByUserId).to.be.a("string");
+  });
+
+  it("US25 CT02: permite reagendar consulta para novo horario sem conflito", async () => {
+    const token = await authenticateAs("ADMIN");
+    const appointment = seedAppointment({}, getSeededAdmin());
+
+    const response = await authorizedRequest("put", `/api/appointments/${appointment.id}`, token).send({
+      scheduledAt: "2026-05-11T10:00:00-03:00"
+    });
+
+    expect(response.status).to.equal(200);
+    expect(response.body.data.scheduledAt).to.equal("2026-05-11T13:00:00.000Z");
+  });
+
+  it("US25 CT02: permite editar agendamento com triagem vinculada alterando apenas horario e observacoes", async () => {
+    const token = await authenticateAs("ADMIN");
+    const patient = seedPatient({ document: "55555555555" });
+    const symptom = seedSymptom({ specialty: "Cardiologia", severity: "HIGH" });
+    const doctor = seedDoctor({ specialty: "Cardiologia", crm: "CRM-SP-919191" });
+    const triage = seedTriage({ patientId: patient.id, symptomIds: [symptom.id] }, getSeededAdmin());
+    const appointment = seedAppointment(
+      {
+        patientId: patient.id,
+        doctorId: doctor.id,
+        triageId: triage.id,
+        scheduledAt: "2026-05-15T10:00:00.000Z"
+      },
+      getSeededAdmin()
+    );
+
+    const response = await authorizedRequest("put", `/api/appointments/${appointment.id}`, token).send({
+      scheduledAt: "2026-05-16T11:30:00.000Z",
+      notes: "Reagendado apos confirmacao do paciente."
+    });
+
+    expect(response.status).to.equal(200);
+    expect(response.body.data.triageId).to.equal(triage.id);
+    expect(response.body.data.doctorId).to.equal(doctor.id);
+    expect(response.body.data.scheduledAt).to.equal("2026-05-16T11:30:00.000Z");
+    expect(response.body.data.notes).to.equal("Reagendado apos confirmacao do paciente.");
+  });
+
+  it("US25 CT03: rejeita reagendamento para horario em conflito", async () => {
+    const token = await authenticateAs("RECEPTIONIST");
+    const doctor = seedDoctor();
+    const firstAppointment = seedAppointment(
+      {
+        doctorId: doctor.id,
+        scheduledAt: "2026-05-10T10:00:00.000Z"
+      },
+      getSeededAdmin()
+    );
+    seedAppointment(
+      {
+        doctorId: doctor.id,
+        patientId: seedPatient({ document: "33333333333" }).id,
+        scheduledAt: "2026-05-11T10:00:00.000Z"
+      },
+      getSeededAdmin()
+    );
+
+    const response = await authorizedRequest("put", `/api/appointments/${firstAppointment.id}`, token).send({
+      scheduledAt: "2026-05-11T10:00:00.000Z"
+    });
+
+    expectApiError(response, 409, "APPOINTMENT_CONFLICT");
+  });
+
+  it("US25 CT04: rejeita troca para medico incompativel com a triagem", async () => {
+    const token = await authenticateAs("ADMIN");
+    const patient = seedPatient();
+    const symptom = seedSymptom({ specialty: "Cardiologia" });
+    const triage = seedTriage({ patientId: patient.id, symptomIds: [symptom.id] }, getSeededAdmin());
+    const compatibleDoctor = seedDoctor({ specialty: "Cardiologia" });
+    const incompatibleDoctor = seedDoctor({ specialty: "Dermatologia", crm: "CRM-SP-888888" });
+    const appointment = seedAppointment(
+      {
+        patientId: patient.id,
+        doctorId: compatibleDoctor.id,
+        triageId: triage.id
+      },
+      getSeededAdmin()
+    );
+
+    const response = await authorizedRequest("put", `/api/appointments/${appointment.id}`, token).send({
+      doctorId: incompatibleDoctor.id
+    });
+
+    expectApiError(response, 409, "DOCTOR_SPECIALTY_MISMATCH");
+  });
+
+  it("US25 CT05: rejeita edicao de agendamento cancelado", async () => {
+    const token = await authenticateAs("ADMIN");
+    const appointment = seedAppointment({}, getSeededAdmin());
+
+    await authorizedRequest("delete", `/api/appointments/${appointment.id}`, token);
+
+    const response = await authorizedRequest("put", `/api/appointments/${appointment.id}`, token).send({
+      notes: "nova observacao"
+    });
+
+    expectApiError(response, 409, "APPOINTMENT_CANNOT_BE_EDITED");
+  });
+
+  it("US25 CT07: retorna nao encontrado ao editar agendamento inexistente", async () => {
+    const token = await authenticateAs("ADMIN");
+
+    const response = await authorizedRequest("put", "/api/appointments/999", token).send({
+      notes: "nova observacao"
+    });
+
+    expectApiError(response, 404, "APPOINTMENT_NOT_FOUND");
+  });
+
+  it("US26 CT01: cancela agendamento SCHEDULED com sucesso", async () => {
+    const token = await authenticateAs("RECEPTIONIST");
+    const appointment = seedAppointment({}, getSeededAdmin());
+
+    const response = await authorizedRequest("delete", `/api/appointments/${appointment.id}`, token);
+
+    expect(response.status).to.equal(200);
+    expect(response.body.data.status).to.equal("CANCELLED");
+    expect(response.body.data.updatedByUserId).to.be.a("string");
+  });
+
+  it("US26 CT02: rejeita cancelamento por falta de permissao", async () => {
+    const token = await authenticateAs("DOCTOR");
+    const appointment = seedAppointment({}, getSeededAdmin());
+
+    const response = await authorizedRequest("delete", `/api/appointments/${appointment.id}`, token);
+
+    expectApiError(response, 403, "FORBIDDEN");
+  });
+
+  it("US26 CT03: retorna nao encontrado ao cancelar agendamento inexistente", async () => {
+    const token = await authenticateAs("ADMIN");
+
+    const response = await authorizedRequest("delete", "/api/appointments/999", token);
+
+    expectApiError(response, 404, "APPOINTMENT_NOT_FOUND");
+  });
+
+  it("US26 CT04: rejeita cancelamento de agendamento ja cancelado", async () => {
+    const token = await authenticateAs("ADMIN");
+    const appointment = seedAppointment({}, getSeededAdmin());
+
+    await authorizedRequest("delete", `/api/appointments/${appointment.id}`, token);
+    const response = await authorizedRequest("delete", `/api/appointments/${appointment.id}`, token);
+
+    expectApiError(response, 409, "APPOINTMENT_ALREADY_CANCELLED");
+  });
+
+  it("US26 CT05: permite novo agendamento no mesmo horario apos cancelamento", async () => {
+    const token = await authenticateAs("ADMIN");
+    const doctor = seedDoctor();
+    const patient = seedPatient();
+    const firstAppointment = seedAppointment(
+      {
+        patientId: patient.id,
+        doctorId: doctor.id,
+        scheduledAt: "2026-05-12T10:00:00.000Z"
+      },
+      getSeededAdmin()
+    );
+
+    await authorizedRequest("delete", `/api/appointments/${firstAppointment.id}`, token);
+
+    const response = await authorizedRequest("post", "/api/appointments", token).send(
+      buildAppointmentFixture({
+        patientId: seedPatient({ document: "44444444444" }).id,
+        doctorId: doctor.id,
+        scheduledAt: "2026-05-12T10:00:00.000Z"
+      })
+    );
+
+    expect(response.status).to.equal(201);
+    expect(response.body.data.status).to.equal("SCHEDULED");
+  });
 });

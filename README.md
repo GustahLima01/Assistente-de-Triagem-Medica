@@ -13,6 +13,7 @@ Permitir que usuarios autenticados da clinica realizem:
 - consulta de especialidade medica com base nos sintomas
 - registro de triagem
 - agendamento de consultas
+- reagendamento e cancelamento de consultas
 
 ## Tecnologias
 
@@ -77,6 +78,15 @@ npm install
 npm start
 ```
 
+Ao subir com `npm start`, a aplicacao carrega automaticamente:
+
+- 1 usuario admin inicial
+- 18 medicos
+- 72 sintomas
+- 10 pacientes
+- 5 triagens
+- 5 agendamentos
+
 ## Como testar
 
 ```bash
@@ -116,7 +126,7 @@ A suite funcional cobre os endpoints:
 - `GET|POST|PUT|DELETE /api/symptoms`
 - `POST /api/triages/specialty-consult`
 - `GET|POST /api/triages`
-- `GET|POST /api/appointments`
+- `GET|POST|PUT|DELETE /api/appointments`
 
 Os testes usam `Mocha` como framework principal, `Supertest` para as chamadas HTTP, `Chai` para as assercoes e `Mochawesome` para o relatorio HTML/JSON. A base em memoria e reiniciada a cada teste funcional para garantir isolamento.
 
@@ -233,6 +243,8 @@ Usuario inicial para bootstrap:
 - consulta de especialidade considera os sintomas informados e o peso da gravidade
 - agendamento valida conflito de horario por medico
 - agendamento com `triageId` valida compatibilidade entre especialidade sugerida e especialidade do medico
+- agendamentos com status `SCHEDULED` podem ser editados para reagendamento ou ajuste de observacoes
+- cancelamento de consulta e logico, alterando o status do agendamento para `CANCELLED`
 - dados sao reiniciados quando a aplicacao e reiniciada
 
 ## Endpoints principais
@@ -253,7 +265,7 @@ Usuario inicial para bootstrap:
 - `GET|POST /api/triages`
 - `GET /api/triages/:id`
 - `GET|POST /api/appointments`
-- `GET /api/appointments/:id`
+- `GET|PUT|DELETE /api/appointments/:id`
 
 ## Formato de resposta
 

@@ -691,6 +691,35 @@
   - Quando tenta editar um agendamento inexistente
   - Entao o sistema deve retornar nao encontrado
 
+**Modelagem complementar de decisao**
+
+| Condicoes de negocio | R1 | R2 | R3 | R4 | R5 | R6 | R7 | R8 | R9 | R10 |
+|---|---|---|---|---|---|---|---|---|---|---|
+| Agendamento existe | N | S | S | S | S | S | S | S | S | S |
+| Status atual e SCHEDULED | - | N | S | S | S | S | S | S | S | S |
+| Perfil autorizado para reagendamento | - | - | N | S | S | S | S | S | S | S |
+| Payload contem apenas campos permitidos | - | - | - | N | S | S | S | S | S | S |
+| scheduledAt informado e valido | - | - | - | - | N | S | S | S | S | S |
+| Houve troca de medico | - | - | - | - | - | N | S | S | S | S |
+| Novo medico existe e esta ativo | - | - | - | - | - | - | N | S | S | S |
+| Existe triagem vinculada | - | - | - | - | - | N ou S | N ou S | N | S | S |
+| Medico compativel com a triagem | - | - | - | - | - | - | - | - | N | S |
+| Existe conflito na composicao final medico + horario | - | - | - | - | - | N | N | N | N | S |
+| Decisao | Retornar nao encontrado | Rejeitar por status nao editavel | Rejeitar por falta de permissao | Rejeitar por campo indevido | Rejeitar por data invalida | Permitir edicao ou reagendamento | Rejeitar por medico inexistente ou inativo | Permitir troca valida de medico | Rejeitar por incompatibilidade com triagem | Rejeitar por conflito |
+
+**Leitura funcional das regras**
+
+- **R1**: protege manutencao sobre identificador inexistente.
+- **R2**: impede reabrir implicitamente consultas fora do status `SCHEDULED`.
+- **R3**: representa o bloqueio de seguranca para perfis nao autorizados.
+- **R4**: garante que o `PUT` nao altere campos fora do escopo de reagendamento.
+- **R5**: cobre data ou hora fora do formato aceito para reagendamento.
+- **R6**: fluxo principal de edicao ou reagendamento valido sem conflito.
+- **R7**: bloqueia troca para medico inexistente ou inativo.
+- **R8**: valida a troca positiva de medico quando a nova composicao continua aderente.
+- **R9**: preserva aderencia clinica entre triagem e medico selecionado.
+- **R10**: protege a agenda contra sobreposicao para o medico na composicao final.
+
 ## US26 - Cancelar uma consulta
 
 | Entrada | Particoes | US26-CT01 | US26-CT02 | US26-CT03 | US26-CT04 | US26-CT05 |

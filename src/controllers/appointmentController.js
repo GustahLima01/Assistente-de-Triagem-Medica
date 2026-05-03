@@ -33,8 +33,40 @@ function createAppointment(req, res, next) {
   }
 }
 
+function updateAppointment(req, res, next) {
+  try {
+    const appointment = appointmentService.updateAppointment(req.params.id, req.body, req.user);
+    writeAuditLog("APPOINTMENT_UPDATED", {
+      userId: req.user.id,
+      appointmentId: appointment.id,
+      patientId: appointment.patientId,
+      doctorId: appointment.doctorId
+    });
+    res.status(200).json(success(appointment, "Consulta atualizada com sucesso."));
+  } catch (error) {
+    next(error);
+  }
+}
+
+function cancelAppointment(req, res, next) {
+  try {
+    const appointment = appointmentService.cancelAppointment(req.params.id, req.user);
+    writeAuditLog("APPOINTMENT_CANCELLED", {
+      userId: req.user.id,
+      appointmentId: appointment.id,
+      patientId: appointment.patientId,
+      doctorId: appointment.doctorId
+    });
+    res.status(200).json(success(appointment, "Consulta cancelada com sucesso."));
+  } catch (error) {
+    next(error);
+  }
+}
+
 module.exports = {
+  cancelAppointment,
   createAppointment,
   getAppointment,
-  listAppointments
+  listAppointments,
+  updateAppointment
 };
