@@ -21,15 +21,19 @@ Permitir que usuarios autenticados da clinica realizem:
 - Express
 - JWT com `jsonwebtoken`
 - Swagger UI com `swagger-ui-express`
+- Cypress
 - Mocha
-- Supertest
 - Chai
-- Mochawesome
+- K6
 - banco de dados em memoria
 
 ## Estrutura
 
 ```text
+cypress.config.js
+package.json
+package-lock.json
+README.md
 src/
   controllers/
   data/
@@ -41,16 +45,15 @@ src/
 resources/
   swagger.json
 tests/
-  appointments/
-  auth/
-  doctors/
+  cypress/
+    e2e/
+      api/
+    support/
   fixtures/
   helpers/
-  patients/
+  performance/
+    lib/
   services/
-  symptoms/
-  triages/
-  users/
   utils/
 wiki/
   documentacao funcional e casos de teste
@@ -98,12 +101,9 @@ Comandos disponiveis:
 ```bash
 npm run test:unit
 npm run test:functional
+npm run test:functional:headed
+npm run test:functional:open
 npm run test:functional:report
-```
-
-Base inicial para performance com K6:
-
-```bash
 npm run test:performance
 ```
 
@@ -128,12 +128,11 @@ A suite funcional cobre os endpoints:
 - `GET|POST /api/triages`
 - `GET|POST|PUT|DELETE /api/appointments`
 
-Os testes usam `Mocha` como framework principal, `Supertest` para as chamadas HTTP, `Chai` para as assercoes e `Mochawesome` para o relatorio HTML/JSON. A base em memoria e reiniciada a cada teste funcional para garantir isolamento.
+Os testes funcionais e E2E agora usam `Cypress`, com a API subindo automaticamente em uma porta de teste e a base em memoria sendo reiniciada antes de cada caso via `cy.task`.
 
-Relatorio funcional:
+Observacao importante da migracao:
 
-- HTML: `reports/api-tests/index.html`
-- JSON: `reports/api-tests/index.json`
+- o caso `US11 CT04: rejeita atualizacao ao remover a especialidade do sintoma` permanece falhando de proposito para continuar expondo o bug atual da aplicacao
 
 Estrutura de performance:
 

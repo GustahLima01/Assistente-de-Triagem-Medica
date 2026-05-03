@@ -1,3 +1,5 @@
+const { mkdirSync } = require("node:fs");
+const { join } = require("node:path");
 const { spawnSync } = require("node:child_process");
 
 const scripts = [
@@ -6,6 +8,8 @@ const scripts = [
   "tests/performance/appointments-create.k6.js",
   "tests/performance/reception-journey.k6.js"
 ];
+
+mkdirSync(join(process.cwd(), "reports", "performance"), { recursive: true });
 
 let exitCode = 0;
 

@@ -47,16 +47,18 @@ jobs:
       - name: Run unit tests
         run: npm run test:unit
 
-      - name: Run functional tests with report
+      - name: Run Cypress functional tests
         run: npm run test:functional:report
 
-      - name: Upload test report
+      - name: Upload Cypress artifacts
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: functional-test-report
-          path: reports/api-tests
-          if-no-files-found: warn
+          name: cypress-artifacts
+          path: |
+            tests/cypress/screenshots
+            tests/cypress/videos
+          if-no-files-found: ignore
 
   performance:
     if: github.event_name == 'workflow_dispatch' && inputs.run_performance
