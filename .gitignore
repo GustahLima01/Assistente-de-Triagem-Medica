@@ -21,6 +21,8 @@ yarn-error.log*
 reports/
 mochawesome-report/
 mochawesome.json
+tests/cypress/screenshots/
+tests/cypress/videos/
 
 # Arquivos do sistema operacional
 .DS_Store
