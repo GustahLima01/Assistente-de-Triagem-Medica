@@ -6,5 +6,7 @@ const router = express.Router();
 router.get("/", appointmentController.listAppointments);
 router.get("/:id", appointmentController.getAppointment);
 router.post("/", appointmentController.createAppointment);
+router.put("/:id", appointmentController.updateAppointment);
+router.delete("/:id", appointmentController.cancelAppointment);
 
 module.exports = router;

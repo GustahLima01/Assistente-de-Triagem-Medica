@@ -334,6 +334,8 @@ Com base nos requisitos funcionais identificados para o Assistente de Triagem Me
 | US22 | Como atendente da clinica, eu quero selecionar um medico compativel com a especialidade sugerida para garantir aderencia ao encaminhamento. | Alta |
 | US23 | Como atendente da clinica, eu quero validar conflito de horarios no agendamento para evitar consultas duplicadas ou sobrepostas. | Alta |
 | US24 | Como atendente da clinica, eu quero consultar os agendamentos realizados para acompanhar a agenda de atendimento. | Media |
+| US25 | Como atendente da clinica, eu quero editar ou reagendar uma consulta para corrigir dados ou ajustar o atendimento sem perder a rastreabilidade. | Alta |
+| US26 | Como atendente da clinica, eu quero cancelar uma consulta para liberar a agenda e manter o historico do atendimento. | Alta |
 
 ## User story - US21
 
@@ -374,6 +376,37 @@ Com base nos requisitos funcionais identificados para o Assistente de Triagem Me
 
 - Regras de negocio
   - RN55. Apenas usuarios com perfil `ADMIN` ou `RECEPTIONIST` podem acessar agendamentos.
+  - RN82. Os status de agendamento devem ser apresentados ao usuario em PT-BR nas consultas e listagens.
+  - RN83. A persistencia pode manter valores internos padronizados, desde que a camada de apresentacao traduza os status exibidos.
 - Criterios de aceite
   - Dado usuario autorizado, quando consultar agenda, entao a API deve listar agendamentos conforme os filtros aplicados.
   - Dado agendamento inexistente, quando consultar por ID, entao a API deve retornar nao encontrado.
+
+## User story - US25
+
+- Regras de negocio
+  - RN67. Apenas usuarios com perfil `ADMIN` ou `RECEPTIONIST` podem editar agendamentos.
+  - RN68. Somente agendamentos com status `SCHEDULED` podem ser editados.
+  - RN69. A edicao pode alterar `doctorId`, `scheduledAt` e `notes`.
+  - RN70. O campo `scheduledAt`, quando alterado, deve conter uma data valida e ser normalizado para formato ISO.
+  - RN71. Ao alterar medico ou horario, a regra de conflito da agenda deve ser revalidada.
+  - RN72. Quando houver `triageId`, a edicao deve preservar a consistencia entre paciente, triagem e especialidade do medico.
+  - RN73. A edicao deve registrar `updatedAt` e o usuario responsavel pela alteracao.
+  - RN74. Nao e permitido editar agendamento com status `CANCELLED`.
+- Criterios de aceite
+  - Dado usuario autorizado, quando editar um agendamento `SCHEDULED` com dados validos, entao a alteracao deve ser persistida.
+  - Dado novo medico ou horario em conflito ou incompativel com a triagem, quando tentar editar, entao a API deve rejeitar.
+
+## User story - US26
+
+- Regras de negocio
+  - RN75. Apenas usuarios com perfil `ADMIN` ou `RECEPTIONIST` podem cancelar agendamentos.
+  - RN76. O cancelamento deve ser logico, alterando o status do agendamento para `CANCELLED`.
+  - RN77. Apenas agendamentos com status `SCHEDULED` podem ser cancelados.
+  - RN78. Agendamentos cancelados devem permanecer disponiveis para consulta e rastreabilidade.
+  - RN79. Apos o cancelamento, o horario do medico deixa de bloquear novo agendamento por conflito.
+  - RN80. O cancelamento deve registrar `updatedAt` e o usuario responsavel pela acao.
+  - RN81. Nao e permitido cancelar um agendamento ja cancelado.
+- Criterios de aceite
+  - Dado usuario autorizado, quando cancelar um agendamento `SCHEDULED`, entao o status deve ser alterado para `CANCELLED`.
+  - Dado agendamento ja cancelado ou inexistente, quando tentar cancelar, entao a API deve rejeitar.

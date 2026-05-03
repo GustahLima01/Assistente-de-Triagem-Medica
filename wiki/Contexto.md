@@ -17,6 +17,7 @@ Construir uma API REST com armazenamento em banco de dados em memoria para valid
 3. O usuario registra os sintomas informados.
 4. O sistema sugere a especialidade medica com base nos sintomas cadastrados.
 5. O usuario agenda uma consulta com um medico compativel com a especialidade sugerida.
+6. O usuario consulta a agenda e pode editar, reagendar ou cancelar o agendamento quando necessario.
 
 ## Perfis considerados
 
@@ -32,13 +33,14 @@ Construir uma API REST com armazenamento em banco de dados em memoria para valid
 - Cadastro, edicao e exclusao de medicos
 - Cadastro, edicao e exclusao de sintomas
 - Consulta de especialidade medica com base nos sintomas informados
-- Agendamento de consulta medica
+- Agendamento, consulta, reagendamento e cancelamento de consulta medica
 
 ## Direcionadores do produto
 
 - Apoiar a triagem operacional sem caracterizar diagnostico medico
 - Priorizar fluxo de atendimento antes de expansoes administrativas
 - Garantir coerencia entre permissao, triagem e agendamento
+- Garantir manutencao do ciclo de vida do agendamento sem perder historico
 - Manter historico minimo para consulta e rastreabilidade
 
 ## Riscos e cuidados

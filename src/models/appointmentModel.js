@@ -8,6 +8,7 @@ function createAppointmentModel(data) {
     status: data.status || "SCHEDULED",
     notes: data.notes || null,
     createdByUserId: data.createdByUserId,
+    updatedByUserId: data.updatedByUserId || null,
     createdAt: data.createdAt || new Date().toISOString(),
     updatedAt: data.updatedAt || new Date().toISOString()
   };

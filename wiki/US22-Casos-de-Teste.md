@@ -2,7 +2,7 @@
 
 ## Referencias
 
-- [Epico 6 - Agendamento de Consulta Medica](Epico-6-Agendamento-de-Consulta-Medica)
+- [Epico 6 - Agendamento de Consulta Medica](Epicos-e-User-Stories#epico-6---agendamento-de-consulta-medica)
 
 ## Visao geral
 

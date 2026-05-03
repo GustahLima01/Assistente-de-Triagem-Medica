@@ -654,7 +654,103 @@
   - Dado que o solicitante possui perfil ADMIN ou RECEPTIONIST
   - Quando consulta um agendamento por identificador inexistente
   - Entao o sistema deve retornar nao encontrado
+## US25 - Editar ou reagendar uma consulta
 
+| Entrada | Particoes | US25-CT01 | US25-CT02 | US25-CT03 | US25-CT04 | US25-CT05 | US25-CT07 |
+|---|---|---|---|---|---|---|---|
+| Perfil solicitante | ADMIN ou RECEPTIONIST / Outro | ADMIN ou RECEPTIONIST | ADMIN ou RECEPTIONIST | ADMIN ou RECEPTIONIST | ADMIN ou RECEPTIONIST | ADMIN ou RECEPTIONIST | ADMIN ou RECEPTIONIST |
+| Status atual do agendamento | SCHEDULED / CANCELLED | SCHEDULED | SCHEDULED | SCHEDULED | SCHEDULED | CANCELLED | Nao encontrado |
+| Campo alterado | notes / scheduledAt / doctorId | notes | scheduledAt | scheduledAt | doctorId | notes | notes |
+| Validade da nova composicao | Valida / Em conflito / Incompativel com triagem / Nao aplicavel | Valida | Valida | Em conflito | Incompativel com triagem | Nao aplicavel | Nao aplicavel |
+| Decisao |  | Permitir edicao das observacoes | Permitir reagendamento | Rejeitar por conflito de horario | Rejeitar por incompatibilidade com a triagem | Rejeitar edicao de agendamento cancelado | Retornar nao encontrado |
+
+**Gherkin**
+
+- **US25-CT01**
+  - Dado que o solicitante possui perfil ADMIN ou RECEPTIONIST
+  - Quando edita apenas as observacoes de um agendamento com status SCHEDULED
+  - Entao o sistema deve persistir a alteracao com rastreabilidade
+- **US25-CT02**
+  - Dado que o solicitante possui perfil ADMIN ou RECEPTIONIST
+  - Quando reagenda um agendamento SCHEDULED para novo horario valido e sem conflito
+  - Entao o sistema deve salvar o novo horario normalizado
+- **US25-CT03**
+  - Dado que o solicitante possui perfil ADMIN ou RECEPTIONIST
+  - Quando tenta reagendar um agendamento SCHEDULED para horario ja ocupado pelo mesmo medico
+  - Entao o sistema deve rejeitar a alteracao por conflito
+- **US25-CT04**
+  - Dado que o solicitante possui perfil ADMIN ou RECEPTIONIST
+  - Quando altera o medico de um agendamento com triagem vinculada para especialidade divergente
+  - Entao o sistema deve rejeitar a alteracao
+- **US25-CT05**
+  - Dado que o agendamento possui status CANCELLED
+  - Quando o solicitante tenta editar seus dados
+  - Entao o sistema deve rejeitar a edicao
+- **US25-CT07**
+  - Dado que o solicitante possui perfil ADMIN ou RECEPTIONIST
+  - Quando tenta editar um agendamento inexistente
+  - Entao o sistema deve retornar nao encontrado
+
+**Modelagem complementar de decisao**
+
+| Condicoes de negocio | R1 | R2 | R3 | R4 | R5 | R6 | R7 | R8 | R9 | R10 |
+|---|---|---|---|---|---|---|---|---|---|---|
+| Agendamento existe | N | S | S | S | S | S | S | S | S | S |
+| Status atual e SCHEDULED | - | N | S | S | S | S | S | S | S | S |
+| Perfil autorizado para reagendamento | - | - | N | S | S | S | S | S | S | S |
+| Payload contem apenas campos permitidos | - | - | - | N | S | S | S | S | S | S |
+| scheduledAt informado e valido | - | - | - | - | N | S | S | S | S | S |
+| Houve troca de medico | - | - | - | - | - | N | S | S | S | S |
+| Novo medico existe e esta ativo | - | - | - | - | - | - | N | S | S | S |
+| Existe triagem vinculada | - | - | - | - | - | N ou S | N ou S | N | S | S |
+| Medico compativel com a triagem | - | - | - | - | - | - | - | - | N | S |
+| Existe conflito na composicao final medico + horario | - | - | - | - | - | N | N | N | N | S |
+| Decisao | Retornar nao encontrado | Rejeitar por status nao editavel | Rejeitar por falta de permissao | Rejeitar por campo indevido | Rejeitar por data invalida | Permitir edicao ou reagendamento | Rejeitar por medico inexistente ou inativo | Permitir troca valida de medico | Rejeitar por incompatibilidade com triagem | Rejeitar por conflito |
+
+**Leitura funcional das regras**
+
+- **R1**: protege manutencao sobre identificador inexistente.
+- **R2**: impede reabrir implicitamente consultas fora do status `SCHEDULED`.
+- **R3**: representa o bloqueio de seguranca para perfis nao autorizados.
+- **R4**: garante que o `PUT` nao altere campos fora do escopo de reagendamento.
+- **R5**: cobre data ou hora fora do formato aceito para reagendamento.
+- **R6**: fluxo principal de edicao ou reagendamento valido sem conflito.
+- **R7**: bloqueia troca para medico inexistente ou inativo.
+- **R8**: valida a troca positiva de medico quando a nova composicao continua aderente.
+- **R9**: preserva aderencia clinica entre triagem e medico selecionado.
+- **R10**: protege a agenda contra sobreposicao para o medico na composicao final.
+
+## US26 - Cancelar uma consulta
+
+| Entrada | Particoes | US26-CT01 | US26-CT02 | US26-CT03 | US26-CT04 | US26-CT05 |
+|---|---|---|---|---|---|---|
+| Perfil solicitante | ADMIN ou RECEPTIONIST / Outro | ADMIN ou RECEPTIONIST | Outro | ADMIN ou RECEPTIONIST | ADMIN ou RECEPTIONIST | ADMIN ou RECEPTIONIST |
+| Status atual do agendamento | SCHEDULED / CANCELLED / Nao encontrado | SCHEDULED | SCHEDULED | Nao encontrado | CANCELLED | CANCELLED seguido de novo agendamento |
+| Consulta posterior do registro | Sim / Nao | Sim | Nao aplicavel | Nao aplicavel | Nao aplicavel | Sim |
+| Decisao |  | Cancelar logicamente o agendamento e manter historico | Rejeitar por falta de permissao | Retornar nao encontrado | Rejeitar cancelamento duplicado | Permitir novo agendamento no mesmo horario apos cancelamento |
+
+**Gherkin**
+
+- **US26-CT01**
+  - Dado que o solicitante possui perfil ADMIN ou RECEPTIONIST
+  - Quando cancela um agendamento com status SCHEDULED
+  - Entao o sistema deve alterar seu status para CANCELLED e manter o historico consultavel
+- **US26-CT02**
+  - Dado que o solicitante nao possui perfil autorizado
+  - Quando tenta cancelar um agendamento
+  - Entao o sistema deve rejeitar a operacao
+- **US26-CT03**
+  - Dado que o solicitante possui perfil ADMIN ou RECEPTIONIST
+  - Quando tenta cancelar um agendamento inexistente
+  - Entao o sistema deve retornar nao encontrado
+- **US26-CT04**
+  - Dado que o agendamento ja possui status CANCELLED
+  - Quando o solicitante tenta cancela-lo novamente
+  - Entao o sistema deve rejeitar a operacao
+- **US26-CT05**
+  - Dado que um agendamento do medico foi cancelado
+  - Quando um novo agendamento e solicitado para o mesmo medico e horario
+  - Entao o sistema deve permitir a nova criacao sem conflito
 ---
 
 ## Observacoes finais
@@ -662,4 +758,5 @@
 - A **US19** tem uma lacuna de especificacao para o comportamento quando nao houver conjunto valido de sintomas para calculo da prioridade; por isso foi mantido um caso explicito de ambiguidade.
 - As USs de **listagem e consulta** possuem poucas particoes porque o documento traz apenas regra de autorizacao.
 - Nas USs com exclusao logica, a decisao cobre tambem o efeito esperado nas operacoes subsequentes quando isso foi explicitado nas regras de negocio.
+- O epico de agendamento passou a cobrir o ciclo de vida completo do registro, incluindo consulta com status amigavel em PT-BR, reagendamento e cancelamento.
 
