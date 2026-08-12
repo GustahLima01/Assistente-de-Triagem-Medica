@@ -1,0 +1,21 @@
+const { patient, symptom } = require("../../support/apiFactories");
+
+describe("API - Symptoms", () => {
+  beforeEach(() => cy.resetApiData());
+
+  it("US09 CT01: cria sintoma com severidade valida e especialidade informada", () => cy.apiRequestAs("ADMIN", "POST", "/symptoms", symptom()).then((r) => { expect(r.status).to.eq(201); expect(r.body.data.specialty).to.eq("Cardiologia"); }));
+  it("US09 CT02: rejeita criacao de sintoma por perfil nao admin", () => cy.apiRequestAs("RECEPTIONIST", "POST", "/symptoms", symptom()).then((r) => cy.apiExpectError(r, 403, "FORBIDDEN")));
+  it("US09 CT03: rejeita criacao sem campos obrigatorios", () => cy.apiRequestAs("ADMIN", "POST", "/symptoms", { name: "Incompleto" }).then((r) => cy.apiExpectError(r, 400, "VALIDATION_ERROR")));
+  it("US09 CT04: rejeita criacao com severidade invalida", () => cy.apiRequestAs("ADMIN", "POST", "/symptoms", symptom({ severity: "URGENT" })).then((r) => cy.apiExpectError(r, 400, "VALIDATION_ERROR")));
+  it("US09 CT05: rejeita criacao sem especialidade", () => cy.apiRequestAs("ADMIN", "POST", "/symptoms", symptom({ specialty: "" })).then((r) => cy.apiExpectError(r, 400, "VALIDATION_ERROR")));
+  it("US10 CT01: permite listar e consultar sintomas", () => cy.apiRequestAs("ADMIN", "POST", "/symptoms", symptom()).then((c) => cy.apiRequestAs("ADMIN", "GET", "/symptoms").then((l) => ({ c, l }))).then(({ c, l }) => { expect(l.body.data).to.have.length(1); return cy.apiRequestAs("ADMIN", "GET", `/symptoms/${c.body.data.id}`); }).then((r) => expect(r.status).to.eq(200)));
+  it("US10 CT02: rejeita consulta de sintomas por perfil nao admin", () => cy.apiRequestAs("RECEPTIONIST", "GET", "/symptoms").then((r) => cy.apiExpectError(r, 403, "FORBIDDEN")));
+  it("US10 CT03: retorna apenas sintomas ativos disponiveis para triagem", () => cy.apiRequestAs("ADMIN", "POST", "/symptoms", symptom({ name: "Ativo" })).then(() => cy.apiRequestAs("ADMIN", "POST", "/symptoms", symptom({ name: "Inativo" })).then((s) => cy.apiRequestAs("ADMIN", "DELETE", `/symptoms/${s.body.data.id}`))).then(() => cy.apiRequestAs("ADMIN", "GET", "/symptoms")).then((r) => { expect(r.body.data).to.have.length(1); expect(r.body.data[0].name).to.eq("Ativo"); }));
+  it("US10 CT04: retorna nao encontrado ao consultar sintoma inexistente", () => cy.apiRequestAs("ADMIN", "GET", "/symptoms/999").then((r) => cy.apiExpectError(r, 404, "SYMPTOM_NOT_FOUND")));
+  it("US11 CT01: atualiza sintoma com severidade valida e especialidade informada", () => cy.apiRequestAs("ADMIN", "POST", "/symptoms", symptom()).then((s) => cy.apiRequestAs("ADMIN", "PUT", `/symptoms/${s.body.data.id}`, { severity: "CRITICAL", specialty: "Neurologia" })).then((r) => { expect(r.status).to.eq(200); expect(r.body.data.severity).to.eq("CRITICAL"); }));
+  it("US11 CT02: rejeita atualizacao de sintoma por perfil nao admin", () => cy.apiRequestAs("ADMIN", "POST", "/symptoms", symptom()).then((s) => cy.apiRequestAs("RECEPTIONIST", "PUT", `/symptoms/${s.body.data.id}`, { severity: "LOW" })).then((r) => cy.apiExpectError(r, 403, "FORBIDDEN")));
+  it("US11 CT03: rejeita atualizacao com severidade invalida", () => cy.apiRequestAs("ADMIN", "POST", "/symptoms", symptom()).then((s) => cy.apiRequestAs("ADMIN", "PUT", `/symptoms/${s.body.data.id}`, { severity: "INVALIDA" })).then((r) => cy.apiExpectError(r, 400, "VALIDATION_ERROR")));
+  it("US11 CT04: rejeita atualizacao ao remover a especialidade do sintoma", () => cy.apiRequestAs("ADMIN", "POST", "/symptoms", symptom()).then((s) => cy.apiRequestAs("ADMIN", "PUT", `/symptoms/${s.body.data.id}`, { specialty: "" })).then((r) => cy.apiExpectError(r, 400, "VALIDATION_ERROR")));
+  it("US12 CT01: inativa sintoma e impede uso em consulta de especialidade e triagem", () => cy.apiRequestAs("ADMIN", "POST", "/symptoms", symptom()).then((s) => cy.apiRequestAs("ADMIN", "DELETE", `/symptoms/${s.body.data.id}`).then(() => s)).then((s) => cy.apiRequestAs("ADMIN", "POST", "/triages/specialty-consult", { symptomIds: [s.body.data.id] })).then((r) => cy.apiExpectError(r, 409, "SYMPTOM_INACTIVE")));
+  it("US12 CT02: rejeita inativacao de sintoma por perfil nao admin", () => cy.apiRequestAs("ADMIN", "POST", "/symptoms", symptom()).then((s) => cy.apiRequestAs("RECEPTIONIST", "DELETE", `/symptoms/${s.body.data.id}`)).then((r) => cy.apiExpectError(r, 403, "FORBIDDEN")));
+});

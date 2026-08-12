@@ -53,6 +53,11 @@ resources/
 tests/
   appointments/
   auth/
+  cypress/
+    e2e/
+      journeys/
+      ui/
+    support/
   doctors/
   fixtures/
   helpers/
@@ -90,6 +95,18 @@ npm install
 npm start
 ```
 
+Aplicacao web:
+
+```bash
+npm run start:web
+```
+
+URLs locais:
+
+- API: `http://localhost:3000/api`
+- Swagger UI: `http://localhost:3000/api/docs`
+- Frontend web: `http://localhost:4000`
+
 ## Como testar
 
 ```bash
@@ -102,6 +119,14 @@ Comandos disponiveis:
 npm run test:unit
 npm run test:functional
 npm run test:functional:report
+npm run test:api:cypress
+npm run test:api:cypress:headed
+npm run test:cypress:all
+npm run test:cypress:all:headed
+npm run test:cypress:open
+npm run test:frontend
+npm run test:frontend:headed
+npm run test:frontend:open
 npm run test:performance
 npm run test:performance:auth-login
 npm run test:performance:triage-specialty-consult
@@ -130,7 +155,28 @@ A suite funcional cobre os endpoints:
 - `GET|POST /api/triages`
 - `GET|POST /api/appointments`
 
-Os testes usam `Mocha` como framework principal, `Supertest` para as chamadas HTTP, `Chai` para as assercoes e `Mochawesome` para o relatorio HTML/JSON. A base em memoria e reiniciada a cada teste funcional para garantir isolamento.
+Os testes unitarios continuam usando `Mocha` e `Chai`. A suite funcional de API foi migrada para `Cypress`, usando `cy.request()` e uma base em memoria reiniciada antes de cada cenario. Os comandos `test:functional` e `test:functional:report` permanecem disponiveis para comparacao com a suite Mocha legada.
+
+A suite frontend usa `Cypress` para validar navegacao pelas telas do menu, operacoes principais de cadastro e a jornada E2E de atendimento, triagem e agendamento no frontend web.
+
+Suite de API com Cypress:
+
+- `npm run test:api:cypress`: executa os 84 cenarios funcionais de API em modo headless
+- `npm run test:api:cypress:headed`: executa os cenarios de API com o navegador visivel
+- A stack de testes usa a API na porta `3000` e o frontend na porta `4000`
+- O cenario conhecido `US11 CT04: rejeita atualizacao ao remover a especialidade do sintoma` deve permanecer falhando
+
+Para executar automaticamente todos os testes Cypress (`api`, `ui` e `journeys`) sem cliques, use `npm run test:cypress:all`. Para executar com o navegador visivel, use `npm run test:cypress:all:headed`. Ambos iniciam a stack de testes com a API na porta `3000` e o frontend na porta `4000`.
+
+Para abrir o Cypress Playground e depurar os specs interativamente, execute `npm run test:cypress:open`. O Playground exige a acao manual `Run all specs` para executar todos os arquivos; o comando anterior `npm run test:frontend:open` permanece como alias.
+
+Fluxo frontend automatizado:
+
+- login com perfis `ADMIN` e `RECEPTIONIST`
+- validacao de todas as telas do menu
+- cadastros principais de pacientes, medicos, sintomas e usuarios
+- jornada E2E iniciando no botao `Atender`, passando pela triagem e concluindo no agendamento do mesmo dia
+- manutencao do cenario conhecido `US11 CT04: rejeita atualizacao ao remover a especialidade do sintoma`
 
 Relatorio funcional:
 
@@ -230,6 +276,11 @@ Usuario inicial para bootstrap:
 
 - email: `admin@clinica.local`
 - senha: `Admin@123`
+
+Usuario operacional para o fluxo web:
+
+- email: `recepcao@clinica.local`
+- senha: `Recepcao@123`
 
 ## Perfis e permissoes
 

@@ -1,0 +1,836 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Assistente de Triagem Medica</title>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bulma@1.0.2/css/bulma.min.css"
+    />
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <div id="app">
+      <section id="login-view" class="hero is-fullheight login-hero">
+        <div class="hero-body">
+          <div class="container">
+            <div class="columns is-centered is-vcentered">
+              <div class="column is-5-tablet is-4-desktop">
+                <div class="is-flex is-justify-content-flex-end mb-4">
+                  <button class="button is-light is-small theme-toggle" type="button" data-theme-toggle>
+                    Alternar tema
+                  </button>
+                </div>
+                <div class="brand-block mb-5">
+                  <p class="eyebrow">Clínica operacional</p>
+                  <h1 class="title is-2 has-text-white">Assistente de Triagem Medica</h1>
+                  <p class="subtitle has-text-white-ter">
+                    Atendimento guiado para recepção, triagem e agendamento.
+                  </p>
+                </div>
+
+                <div class="box app-card">
+                  <h2 class="title is-4">Entrar</h2>
+                  <p class="mb-4 has-text-grey">
+                    Use suas credenciais para acessar o fluxo de atendimento.
+                  </p>
+
+                  <div
+                    id="login-error"
+                    class="notification is-danger is-light is-hidden"
+                    role="alert"
+                    aria-live="assertive"
+                    aria-atomic="true"
+                  ></div>
+
+                  <form id="login-form">
+                    <div class="field">
+                      <label class="label" for="login-email">E-mail</label>
+                      <div class="control">
+                        <input
+                          id="login-email"
+                          name="email"
+                          class="input"
+                          type="email"
+                          placeholder="admin@clinica.local"
+                          required
+                        />
+                      </div>
+                    </div>
+
+                    <div class="field">
+                      <label class="label" for="login-password">Senha</label>
+                      <div class="control">
+                        <input
+                          id="login-password"
+                          name="password"
+                          class="input"
+                          type="password"
+                          placeholder="Digite sua senha"
+                          required
+                        />
+                      </div>
+                    </div>
+
+                    <div class="field">
+                      <button class="button is-primary is-fullwidth is-medium" type="submit">
+                        Acessar sistema
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="shell-view" class="is-hidden">
+        <div class="shell-layout">
+          <aside class="sidebar">
+            <div>
+              <div class="sidebar-brand">
+                <p class="eyebrow">Triagem</p>
+                <h1 class="title is-4 has-text-white mb-1">Mesa de Atendimento</h1>
+                <p class="has-text-white-ter is-size-7">
+                  Fluxo guiado de recepção e encaminhamento.
+                </p>
+              </div>
+
+              <nav class="menu" aria-label="Navegação principal">
+                <ul class="menu-list app-menu-list">
+                  <li class="app-menu-item"><button class="nav-link button-reset is-active" type="button" data-route="dashboard" aria-current="page">Atendimento</button></li>
+                  <li class="app-menu-item"><button class="nav-link button-reset" type="button" data-route="patients">Pacientes</button></li>
+                  <li class="app-menu-item"><button class="nav-link button-reset" type="button" data-route="triage">Nova triagem</button></li>
+                  <li class="app-menu-item"><button class="nav-link button-reset" type="button" data-route="appointments">Agendamentos</button></li>
+                  <li class="app-menu-item"><button class="nav-link button-reset admin-only" type="button" data-route="doctors">Médicos</button></li>
+                  <li class="app-menu-item"><button class="nav-link button-reset admin-only" type="button" data-route="symptoms">Sintomas</button></li>
+                  <li class="app-menu-item"><button class="nav-link button-reset admin-only" type="button" data-route="users">Usuários</button></li>
+                </ul>
+              </nav>
+            </div>
+
+            <div class="sidebar-footer">
+              <div class="user-chip">
+                <p id="current-user-name" class="has-text-weight-semibold has-text-white"></p>
+                <p id="current-user-role" class="has-text-white-ter is-size-7"></p>
+              </div>
+              <button id="logout-button" class="button is-outlined is-light is-fullwidth" type="button">
+                Sair
+              </button>
+            </div>
+          </aside>
+
+          <main class="main-panel">
+            <header class="topbar">
+              <div class="topbar-intro">
+                <p class="eyebrow has-text-primary">Operação em andamento</p>
+                <h2 id="page-title" class="title is-3 mb-1" tabindex="-1">Atendimento</h2>
+                <p id="page-subtitle" class="page-subtitle">
+                  Acompanhe o fluxo operacional da recepção com foco em clareza e rapidez.
+                </p>
+              </div>
+                <div class="is-flex is-align-items-center is-flex-wrap-wrap topbar-actions">
+                  <button class="button is-light theme-toggle" type="button" data-theme-toggle>
+                    Alternar tema
+                  </button>
+                </div>
+              </header>
+
+            <div
+              id="global-feedback"
+              class="notification is-hidden"
+              role="status"
+              aria-live="polite"
+              aria-atomic="true"
+            ></div>
+
+            <main id="main-content" class="main-content" tabindex="-1">
+            <section id="route-dashboard" class="route-section" aria-labelledby="page-title">
+              <div class="columns is-variable is-5">
+                <div id="patients-list-column" class="column is-7-desktop">
+                  <div class="box app-card dashboard-patients-card">
+                    <div class="level is-mobile mb-4">
+                      <div class="level-left">
+                        <div>
+                          <h3 class="title is-4 mb-1">Iniciar atendimento</h3>
+                          <p class="has-text-grey">
+                            Busque um paciente existente ou cadastre rapidamente para seguir para a triagem.
+                          </p>
+                        </div>
+                      </div>
+                      <div class="level-right card-header-action">
+                        <button id="dashboard-go-triage" class="button is-primary" type="button">
+                          Nova triagem
+                        </button>
+                      </div>
+                    </div>
+
+                    <form id="dashboard-patient-search-form" class="mb-4">
+                      <div class="columns is-multiline">
+                        <div class="column is-6">
+                          <label class="label">Nome</label>
+                          <input id="dashboard-patient-name" class="input" type="text" placeholder="Buscar por nome" />
+                        </div>
+                        <div class="column is-4">
+                          <label class="label">Documento</label>
+                          <input id="dashboard-patient-document" class="input" type="text" placeholder="CPF ou documento" />
+                        </div>
+                        <div class="column is-2 is-flex is-align-items-flex-end">
+                          <button id="dashboard-patient-search-button" class="button is-primary is-light is-fullwidth search-button" type="submit">Buscar</button>
+                        </div>
+                      </div>
+                    </form>
+
+                    <div class="table-container app-scroll-region">
+                      <table class="table is-fullwidth is-hoverable">
+                        <caption class="sr-only">Pacientes encontrados na busca rapida do atendimento</caption>
+                        <thead>
+                          <tr>
+                            <th scope="col">Paciente</th>
+                            <th scope="col">Documento</th>
+                            <th scope="col">Telefone</th>
+                            <th scope="col">Status</th>
+                            <th scope="col"></th>
+                          </tr>
+                        </thead>
+                        <tbody id="dashboard-patient-results"></tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="column is-5-desktop">
+                  <div class="box app-card dashboard-appointments-card">
+                    <div class="level is-mobile mb-4">
+                      <div class="level-left">
+                        <div>
+                          <h3 class="title is-4 mb-1">Agenda do dia</h3>
+                          <p class="has-text-grey">Visão rápida dos agendamentos de hoje.</p>
+                        </div>
+                      </div>
+                      <div class="level-right">
+                        <button id="dashboard-go-appointments" class="button is-light" type="button">Ver agenda</button>
+                      </div>
+                    </div>
+                    <div id="dashboard-appointments-list" class="stack-list app-scroll-region"></div>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <section id="route-patients" class="route-section is-hidden">
+              <div class="columns is-variable is-5">
+                <div class="column is-7-desktop">
+                  <div class="box app-card patients-list-card">
+                    <div class="level is-mobile mb-4">
+                      <div class="level-left">
+                        <div>
+                          <h3 class="title is-4 mb-1">Pacientes</h3>
+                          <p class="has-text-grey">Gerencie o cadastro e localize pacientes rapidamente.</p>
+                        </div>
+                      </div>
+                      <div class="level-right card-header-action">
+                        <button id="patient-new-button" class="button is-primary" type="button">Novo paciente</button>
+                      </div>
+                    </div>
+
+                    <form id="patient-filter-form" class="mb-4">
+                      <div class="columns is-multiline">
+                        <div class="column is-5">
+                          <label class="label">Nome</label>
+                          <input id="patient-filter-name" class="input" type="text" />
+                        </div>
+                        <div class="column is-4">
+                          <label class="label">Documento</label>
+                          <input id="patient-filter-document" class="input" type="text" />
+                        </div>
+                        <div class="column is-3">
+                          <label class="label">Status</label>
+                          <div class="select is-fullwidth">
+                            <select id="patient-filter-active">
+                              <option value="">Todos</option>
+                              <option value="true">Ativo</option>
+                              <option value="false">Inativo</option>
+                            </select>
+                          </div>
+                        </div>
+                      </div>
+                      <div class="buttons">
+                        <button class="button is-link" type="submit">Aplicar filtros</button>
+                        <button id="patient-filter-reset" class="button is-light" type="button">Limpar</button>
+                      </div>
+                    </form>
+
+                    <div class="table-container app-scroll-region">
+                      <table class="table is-fullwidth is-hoverable">
+                        <caption class="sr-only">Tabela de pacientes cadastrados</caption>
+                        <thead>
+                          <tr>
+                            <th scope="col">Nome</th>
+                            <th scope="col">Documento</th>
+                            <th scope="col">Data de nascimento</th>
+                            <th scope="col">Telefone</th>
+                            <th scope="col">Status</th>
+                            <th scope="col"></th>
+                          </tr>
+                        </thead>
+                        <tbody id="patients-table-body"></tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+
+                <div id="patients-form-column" class="column is-5-desktop is-hidden">
+                  <div id="patient-form-panel" class="box app-card patient-form-card is-hidden" aria-hidden="true">
+                    <h3 id="patient-form-title" class="title is-4 mb-4">Cadastrar paciente</h3>
+                    <div id="patient-form-error" class="notification is-danger is-light is-hidden"></div>
+                    <form id="patient-form">
+                      <input id="patient-id" type="hidden" />
+                      <div class="field">
+                        <label class="label">Nome</label>
+                        <input id="patient-name" class="input" type="text" required />
+                      </div>
+                      <div class="field">
+                        <label class="label">Documento</label>
+                        <input id="patient-document" class="input" type="text" required />
+                      </div>
+                      <div class="field">
+                        <label class="label">Data de nascimento</label>
+                        <input
+                          id="patient-birthdate"
+                          class="input"
+                          type="text"
+                          data-picker-mode="date"
+                          placeholder="dd/mm/aaaa"
+                          autocomplete="off"
+                          inputmode="numeric"
+                          maxlength="10"
+                          required
+                        />
+                      </div>
+                      <div class="field">
+                        <label class="label">Telefone</label>
+                        <input id="patient-phone" class="input" type="text" required />
+                      </div>
+                      <div class="field">
+                        <label class="label">E-mail</label>
+                        <input id="patient-email" class="input" type="email" />
+                      </div>
+                      <div class="field">
+                        <label class="label">Observações</label>
+                        <textarea id="patient-notes" class="textarea" rows="3"></textarea>
+                      </div>
+                      <div class="field">
+                        <label class="checkbox">
+                          <input id="patient-active" type="checkbox" checked />
+                          Paciente ativo
+                        </label>
+                      </div>
+                      <div class="buttons">
+                        <button class="button is-primary" type="submit">Salvar paciente</button>
+                        <button id="patient-cancel-button" class="button is-light" type="button">Cancelar</button>
+                      </div>
+                    </form>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <section id="route-triage" class="route-section is-hidden">
+              <div class="box app-card mb-5">
+                <div class="triage-header">
+                  <div>
+                    <p class="eyebrow has-text-primary">Fluxo guiado</p>
+                    <h3 class="title is-3 mb-2">Nova triagem</h3>
+                    <p class="has-text-grey">
+                      Selecione o paciente, escolha os sintomas, valide o resultado e siga para o agendamento.
+                    </p>
+                  </div>
+                  <div class="triage-steps">
+                    <div class="triage-step is-active">1. Paciente</div>
+                    <div class="triage-step">2. Sintomas</div>
+                    <div class="triage-step">3. Resultado</div>
+                    <div class="triage-step">4. Confirmação</div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="columns is-variable is-5 triage-columns">
+                <div class="column is-4-desktop triage-side-column">
+                  <div class="box app-card">
+                    <h4 class="title is-5">Paciente atual</h4>
+                    <div id="triage-catalog-warning" class="notification is-warning is-light is-hidden mb-4"></div>
+                    <div class="field">
+                      <label class="label">Selecione o paciente</label>
+                      <div class="select is-fullwidth">
+                        <select id="triage-patient-id"></select>
+                      </div>
+                    </div>
+                    <div id="triage-selected-patient" class="empty-state compact">
+                      Selecione um paciente para iniciar a triagem.
+                    </div>
+                    <div class="buttons mt-4">
+                      <button id="triage-open-patients" class="button is-light" type="button">Abrir pacientes</button>
+                      <button id="triage-open-patient-form" class="button is-primary is-light" type="button">Cadastro rapido</button>
+                    </div>
+                  </div>
+
+                  <div class="box app-card">
+                    <h4 class="title is-5">Observacoes da triagem</h4>
+                    <textarea id="triage-notes" class="textarea" rows="4" placeholder="Detalhes complementares do atendimento."></textarea>
+                  </div>
+                </div>
+
+                <div class="column is-8-desktop triage-main-column">
+                  <div class="box app-card triage-symptoms-card">
+                    <div class="level is-mobile mb-4">
+                      <div class="level-left">
+                        <div>
+                          <h4 class="title is-5 mb-1">Sintomas</h4>
+                          <p class="has-text-grey">Selecione os sintomas que melhor representam o caso informado.</p>
+                        </div>
+                      </div>
+                      <div class="level-right">
+                        <button id="triage-reload-symptoms" class="button is-light" type="button">Atualizar sintomas</button>
+                      </div>
+                    </div>
+
+                    <form id="triage-symptom-filter-form" class="mb-4">
+                      <div class="columns is-multiline">
+                        <div class="column is-5">
+                          <label class="label">Nome</label>
+                          <input id="triage-symptom-name" class="input" type="text" />
+                        </div>
+                        <div class="column is-3">
+                          <label class="label">Severidade</label>
+                          <div class="select is-fullwidth">
+                            <select id="triage-symptom-severity">
+                              <option value="">Todas</option>
+                              <option value="LOW">Baixa</option>
+                              <option value="MEDIUM">Media</option>
+                              <option value="HIGH">Alta</option>
+                              <option value="CRITICAL">Critica</option>
+                            </select>
+                          </div>
+                        </div>
+                        <div class="column is-4">
+                          <label class="label">Especialidade</label>
+                          <input id="triage-symptom-specialty" class="input" type="text" />
+                        </div>
+                      </div>
+                      <div class="buttons">
+                        <button class="button is-link" type="submit">Filtrar sintomas</button>
+                        <button id="triage-symptom-filter-reset" class="button is-light" type="button">Limpar</button>
+                      </div>
+                    </form>
+
+                    <div id="triage-symptom-list" class="choice-grid app-scroll-region"></div>
+
+                    <div class="buttons mt-5">
+                      <button id="triage-consult-button" class="button is-primary" type="button">
+                        Consultar especialista
+                      </button>
+                    </div>
+                  </div>
+
+                  <div class="box app-card result-panel triage-result-panel" tabindex="-1">
+                    <h4 class="title is-5">Resultado calculado</h4>
+                    <div id="triage-result" class="empty-state compact" tabindex="-1" aria-live="polite" aria-atomic="true">
+                      O especialista sugerido e a prioridade aparecerão aqui após a consulta.
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <section id="route-appointments" class="route-section is-hidden">
+              <div class="columns is-variable is-5">
+                <div class="column is-7-desktop">
+                  <div class="box app-card appointments-list-card">
+                    <div class="level is-mobile mb-4">
+                      <div class="level-left">
+                        <div>
+                          <h3 class="title is-4 mb-1">Agendamentos</h3>
+                          <p class="has-text-grey">Consulte a agenda e acompanhe conflitos ou encaixes necessários.</p>
+                        </div>
+                      </div>
+                      <div class="level-right card-header-action">
+                        <button id="appointment-new-button" class="button is-primary" type="button">Novo agendamento</button>
+                      </div>
+                    </div>
+
+                    <form id="appointment-filter-form" class="mb-4">
+                      <div class="columns is-multiline">
+                        <div class="column is-4">
+                          <label class="label">Paciente</label>
+                          <div class="select is-fullwidth">
+                            <select id="appointment-filter-patient-id">
+                              <option value="">Todos</option>
+                            </select>
+                          </div>
+                        </div>
+                        <div class="column is-4">
+                          <label class="label">Médico</label>
+                          <div class="select is-fullwidth">
+                            <select id="appointment-filter-doctor-id">
+                              <option value="">Todos</option>
+                            </select>
+                          </div>
+                        </div>
+                        <div class="column is-4">
+                          <label class="label">Status</label>
+                          <div class="select is-fullwidth">
+                            <select id="appointment-filter-status">
+                              <option value="">Todos</option>
+                              <option value="SCHEDULED">Agendado</option>
+                            </select>
+                          </div>
+                        </div>
+                        <div class="column is-6">
+                          <label class="label">De</label>
+                          <input
+                            id="appointment-filter-from"
+                            class="input"
+                            type="text"
+                            data-picker-mode="datetime"
+                            placeholder="dd/mm/aaaa hh:mm"
+                            autocomplete="off"
+                            inputmode="numeric"
+                            maxlength="16"
+                          />
+                        </div>
+                        <div class="column is-6">
+                          <label class="label">Ate</label>
+                          <input
+                            id="appointment-filter-to"
+                            class="input"
+                            type="text"
+                            data-picker-mode="datetime"
+                            placeholder="dd/mm/aaaa hh:mm"
+                            autocomplete="off"
+                            inputmode="numeric"
+                            maxlength="16"
+                          />
+                        </div>
+                      </div>
+                      <div class="buttons">
+                        <button class="button is-link" type="submit">Aplicar filtros</button>
+                        <button id="appointment-filter-reset" class="button is-light" type="button">Limpar</button>
+                      </div>
+                    </form>
+
+                    <div class="table-container app-scroll-region">
+                      <table class="table is-fullwidth is-hoverable">
+                        <caption class="sr-only">Tabela de agendamentos filtrados</caption>
+                        <thead>
+                          <tr>
+                            <th scope="col">Paciente</th>
+                            <th scope="col">Médico</th>
+                            <th scope="col">Data/hora</th>
+                            <th scope="col">Status</th>
+                            <th scope="col">Triagem</th>
+                          </tr>
+                        </thead>
+                        <tbody id="appointments-table-body"></tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="column is-5-desktop">
+                  <div id="appointment-form-placeholder" class="box app-card appointment-form-card is-hidden" aria-hidden="true">
+                    <p class="eyebrow has-text-primary">Fluxo guiado</p>
+                    <h3 class="title is-4 mt-2 mb-3">Abra o agendamento no momento certo</h3>
+                    <p class="has-text-grey mb-0">
+                      Clique em <strong>Novo agendamento</strong> para registrar uma consulta ou siga pela triagem para chegar aqui com o paciente e a especialidade já sugeridos.
+                    </p>
+                  </div>
+                  <div id="appointment-form-panel" class="box app-card appointment-form-card is-hidden" aria-hidden="true">
+                    <h3 id="appointment-form-title" class="title is-4 mb-4">Agendar consulta</h3>
+                    <div id="appointment-catalog-warning" class="notification is-warning is-light is-hidden"></div>
+                    <div id="appointment-form-error" class="notification is-danger is-light is-hidden"></div>
+                    <form id="appointment-form">
+                      <div class="field">
+                        <label class="label">Paciente</label>
+                        <div class="select is-fullwidth">
+                          <select id="appointment-patient-id" required></select>
+                        </div>
+                      </div>
+                      <div class="field">
+                        <label class="label">Triagem</label>
+                        <div class="select is-fullwidth">
+                          <select id="appointment-triage-id">
+                            <option value="">Sem triagem vinculada</option>
+                          </select>
+                        </div>
+                      </div>
+                      <div class="field">
+                        <label class="label">Médico</label>
+                        <div class="select is-fullwidth">
+                          <select id="appointment-doctor-id" required></select>
+                        </div>
+                      </div>
+                      <div class="field">
+                        <label class="label">Data e hora</label>
+                        <input
+                          id="appointment-scheduled-at"
+                          class="input"
+                          type="text"
+                          data-picker-mode="datetime"
+                          placeholder="dd/mm/aaaa hh:mm"
+                          autocomplete="off"
+                          inputmode="numeric"
+                          maxlength="16"
+                          required
+                        />
+                      </div>
+                      <div class="field">
+                        <label class="label">Observações</label>
+                        <textarea id="appointment-notes" class="textarea" rows="3"></textarea>
+                      </div>
+                      <div class="buttons">
+                        <button class="button is-primary" type="submit">Confirmar agendamento</button>
+                        <button id="appointment-cancel-button" class="button is-light" type="button">Cancelar</button>
+                      </div>
+                    </form>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <section id="route-doctors" class="route-section is-hidden">
+              <div class="columns is-variable is-5">
+                <div class="column is-7-desktop">
+                  <div class="box app-card doctors-list-card">
+                    <div class="level is-mobile mb-4">
+                      <div class="level-left">
+                        <div>
+                          <h3 class="title is-4 mb-1">Médicos</h3>
+                          <p class="has-text-grey">Mantenha a base de profissionais disponivel para o agendamento.</p>
+                        </div>
+                      </div>
+                      <div class="level-right card-header-action">
+                        <button id="doctor-new-button" class="button is-primary" type="button">Novo médico</button>
+                      </div>
+                    </div>
+                    <form id="doctor-filter-form" class="mb-4">
+                      <div class="columns is-multiline">
+                        <div class="column is-4"><input id="doctor-filter-name" class="input" type="text" placeholder="Nome" /></div>
+                        <div class="column is-4"><input id="doctor-filter-crm" class="input" type="text" placeholder="CRM" /></div>
+                        <div class="column is-4"><input id="doctor-filter-specialty" class="input" type="text" placeholder="Especialidade" /></div>
+                      </div>
+                      <div class="field">
+                        <label class="checkbox">
+                          <input id="doctor-filter-include-inactive" type="checkbox" checked />
+                          Incluir inativos
+                        </label>
+                      </div>
+                      <div class="buttons">
+                        <button class="button is-link" type="submit">Aplicar filtros</button>
+                        <button id="doctor-filter-reset" class="button is-light" type="button">Limpar</button>
+                      </div>
+                    </form>
+                    <div class="table-container app-scroll-region">
+                      <table class="table is-fullwidth is-hoverable">
+                        <caption class="sr-only">Tabela de médicos cadastrados</caption>
+                        <thead><tr><th scope="col">Nome</th><th scope="col">CRM</th><th scope="col">Especialidade</th><th scope="col">Status</th><th scope="col"></th></tr></thead>
+                        <tbody id="doctors-table-body"></tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+                <div class="column is-5-desktop">
+                  <div id="doctor-form-empty-state" class="box app-card form-empty-card">
+                    <p class="eyebrow has-text-primary">Ação contextual</p>
+                    <h3 class="title is-4 mt-2 mb-3">Cadastre ou edite quando necessário</h3>
+                    <p class="has-text-grey mb-0">
+                      A lista permanece em foco. Abra o formulário ao clicar em <strong>Novo médico</strong> ou em <strong>Editar</strong>.
+                    </p>
+                  </div>
+                  <div id="doctor-form-panel" class="box app-card doctor-form-card is-hidden" aria-hidden="true">
+                    <h3 id="doctor-form-title" class="title is-4 mb-4">Cadastrar médico</h3>
+                    <div id="doctor-form-error" class="notification is-danger is-light is-hidden"></div>
+                    <form id="doctor-form">
+                      <input id="doctor-id" type="hidden" />
+                      <div class="field"><label class="label">Nome</label><input id="doctor-name" class="input" type="text" required /></div>
+                      <div class="field"><label class="label">CRM</label><input id="doctor-crm" class="input" type="text" required /></div>
+                      <div class="field"><label class="label">Especialidade</label><input id="doctor-specialty" class="input" type="text" required /></div>
+                      <div class="field"><label class="label">Telefone</label><input id="doctor-phone" class="input" type="text" /></div>
+                      <div class="field"><label class="label">E-mail</label><input id="doctor-email" class="input" type="email" /></div>
+                      <div class="field">
+                        <label class="checkbox"><input id="doctor-active" type="checkbox" checked /> Médico ativo</label>
+                      </div>
+                      <div class="buttons">
+                        <button class="button is-primary" type="submit">Salvar médico</button>
+                        <button id="doctor-cancel-button" class="button is-light" type="button">Cancelar</button>
+                      </div>
+                    </form>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <section id="route-symptoms" class="route-section is-hidden">
+              <div class="columns is-variable is-5">
+                <div class="column is-7-desktop">
+                  <div class="box app-card symptoms-list-card">
+                    <div class="level is-mobile mb-4">
+                      <div class="level-left">
+                        <div>
+                          <h3 class="title is-4 mb-1">Sintomas</h3>
+                          <p class="has-text-grey">Mantenha a base de triagem consistente e atualizada.</p>
+                        </div>
+                      </div>
+                      <div class="level-right card-header-action">
+                        <button id="symptom-new-button" class="button is-primary" type="button">Novo sintoma</button>
+                      </div>
+                    </div>
+                    <form id="symptom-filter-form" class="mb-4">
+                      <div class="columns is-multiline">
+                        <div class="column is-4"><input id="symptom-filter-name" class="input" type="text" placeholder="Nome" /></div>
+                        <div class="column is-4">
+                          <div class="select is-fullwidth">
+                            <select id="symptom-filter-severity">
+                              <option value="">Todos</option>
+                              <option value="LOW">Baixa</option>
+                              <option value="MEDIUM">Media</option>
+                              <option value="HIGH">Alta</option>
+                              <option value="CRITICAL">Critica</option>
+                            </select>
+                          </div>
+                        </div>
+                        <div class="column is-4"><input id="symptom-filter-specialty" class="input" type="text" placeholder="Especialidade" /></div>
+                      </div>
+                      <div class="field">
+                        <label class="checkbox">
+                          <input id="symptom-filter-include-inactive" type="checkbox" />
+                          Incluir inativos
+                        </label>
+                      </div>
+                      <div class="buttons">
+                        <button class="button is-link" type="submit">Aplicar filtros</button>
+                        <button id="symptom-filter-reset" class="button is-light" type="button">Limpar</button>
+                      </div>
+                    </form>
+                    <div class="table-container app-scroll-region">
+                      <table class="table is-fullwidth is-hoverable">
+                        <caption class="sr-only">Tabela de sintomas cadastrados</caption>
+                        <thead><tr><th scope="col">Nome</th><th scope="col">Severidade</th><th scope="col">Especialidade</th><th scope="col">Status</th><th scope="col"></th></tr></thead>
+                        <tbody id="symptoms-table-body"></tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+                <div class="column is-5-desktop">
+                  <div id="symptom-form-empty-state" class="box app-card form-empty-card">
+                    <p class="eyebrow has-text-primary">Base organizada</p>
+                    <h3 class="title is-4 mt-2 mb-3">Mantenha a lista como referência principal</h3>
+                    <p class="has-text-grey mb-0">
+                      Exiba o formulário somente quando for criar um novo sintoma ou editar um registro existente.
+                    </p>
+                  </div>
+                  <div id="symptom-form-panel" class="box app-card symptom-form-card is-hidden" aria-hidden="true">
+                    <h3 id="symptom-form-title" class="title is-4 mb-4">Cadastrar sintoma</h3>
+                    <div id="symptom-form-error" class="notification is-danger is-light is-hidden"></div>
+                    <form id="symptom-form">
+                      <input id="symptom-id" type="hidden" />
+                      <div class="field"><label class="label">Nome</label><input id="symptom-name" class="input" type="text" required /></div>
+                      <div class="field"><label class="label">Descrição</label><textarea id="symptom-description" class="textarea" rows="3"></textarea></div>
+                      <div class="field">
+                        <label class="label">Severidade</label>
+                        <div class="select is-fullwidth">
+                          <select id="symptom-severity" required>
+                            <option value="LOW">Baixa</option>
+                            <option value="MEDIUM">Media</option>
+                            <option value="HIGH">Alta</option>
+                            <option value="CRITICAL">Critica</option>
+                          </select>
+                        </div>
+                      </div>
+                      <div class="field"><label class="label">Especialidade</label><input id="symptom-specialty" class="input" type="text" required /></div>
+                      <div class="field">
+                        <label class="checkbox"><input id="symptom-active" type="checkbox" checked /> Sintoma ativo</label>
+                      </div>
+                      <div class="buttons">
+                        <button class="button is-primary" type="submit">Salvar sintoma</button>
+                        <button id="symptom-cancel-button" class="button is-light" type="button">Cancelar</button>
+                      </div>
+                    </form>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <section id="route-users" class="route-section is-hidden">
+              <div class="columns is-variable is-5">
+                <div class="column is-7-desktop">
+                  <div class="box app-card users-list-card">
+                    <div class="level is-mobile mb-4">
+                      <div class="level-left">
+                        <div>
+                          <h3 class="title is-4 mb-1">Usuários</h3>
+                          <p class="has-text-grey">Controle de acesso da clínica para operação e administração.</p>
+                        </div>
+                      </div>
+                      <div class="level-right card-header-action">
+                        <button id="user-new-button" class="button is-primary" type="button">Novo usuário</button>
+                      </div>
+                    </div>
+                    <div class="table-container app-scroll-region">
+                      <table class="table is-fullwidth is-hoverable">
+                        <caption class="sr-only">Tabela de usuários da clínica</caption>
+                        <thead><tr><th scope="col">Nome</th><th scope="col">E-mail</th><th scope="col">Perfil</th><th scope="col">Status</th><th scope="col"></th></tr></thead>
+                        <tbody id="users-table-body"></tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+                <div class="column is-5-desktop">
+                  <div id="user-form-empty-state" class="box app-card form-empty-card">
+                    <p class="eyebrow has-text-primary">Acesso controlado</p>
+                    <h3 class="title is-4 mt-2 mb-3">Abra o formulário só quando houver ação</h3>
+                    <p class="has-text-grey mb-0">
+                      Isso reduz ruído visual e mantém a lista de usuários como ponto principal de consulta.
+                    </p>
+                  </div>
+                  <div id="user-form-panel" class="box app-card user-form-card is-hidden" aria-hidden="true">
+                    <h3 id="user-form-title" class="title is-4 mb-4">Cadastrar usuário</h3>
+                    <div id="user-form-error" class="notification is-danger is-light is-hidden"></div>
+                    <form id="user-form">
+                      <input id="user-id" type="hidden" />
+                      <div class="field"><label class="label">Nome</label><input id="user-name" class="input" type="text" required /></div>
+                      <div class="field"><label class="label">E-mail</label><input id="user-email" class="input" type="email" required /></div>
+                      <div class="field">
+                        <label class="label">Perfil</label>
+                        <div class="select is-fullwidth">
+                          <select id="user-role" required>
+                            <option value="ADMIN">Administrador</option>
+                            <option value="RECEPTIONIST">Recepção</option>
+                            <option value="DOCTOR">Médico</option>
+                          </select>
+                        </div>
+                      </div>
+                      <div class="field"><label class="label">Senha</label><input id="user-password" class="input" type="password" /></div>
+                      <div class="field">
+                        <label class="checkbox"><input id="user-active" type="checkbox" checked /> Usuário ativo</label>
+                      </div>
+                      <div class="buttons">
+                        <button class="button is-primary" type="submit">Salvar usuário</button>
+                        <button id="user-cancel-button" class="button is-light" type="button">Cancelar</button>
+                      </div>
+                    </form>
+                  </div>
+                </div>
+              </div>
+            </section>
+            </main>
+          </main>
+        </div>
+      </section>
+    </div>
+
+    <script src="/app.js"></script>
+  </body>
+</html>

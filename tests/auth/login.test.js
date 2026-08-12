@@ -13,6 +13,18 @@ describe("POST /api/auth/login", () => {
     expect(response.body.data.user.email).to.equal("admin@clinica.local");
   });
 
+  it("US02 CT01.1: autentica usuario receptionist semeado para o fluxo web", async () => {
+    const response = await login({
+      email: "recepcao@clinica.local",
+      password: "Recepcao@123"
+    });
+
+    expect(response.status).to.equal(200);
+    expect(response.body.data.token).to.be.a("string");
+    expect(response.body.data.user.email).to.equal("recepcao@clinica.local");
+    expect(response.body.data.user.role).to.equal("RECEPTIONIST");
+  });
+
   it("US02 CT02: rejeita autenticacao de usuario inativo", async () => {
     seedInactiveUser({
       email: "inativo@clinica.local",
@@ -34,6 +46,6 @@ describe("POST /api/auth/login", () => {
     });
 
     expectApiError(response, 401, "INVALID_CREDENTIALS");
-    expect(db.users).to.have.lengthOf(1);
+    expect(db.users).to.have.lengthOf(3);
   });
 });
