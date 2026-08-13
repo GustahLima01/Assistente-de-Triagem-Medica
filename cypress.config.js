@@ -1,5 +1,4 @@
 const { defineConfig } = require("cypress");
-const net = require("node:net");
 const app = require("./src/app");
 const { db, resetDatabase } = require("./src/data/memoryDb");
 const {
@@ -16,36 +15,9 @@ const {
   seedUser
 } = require("./tests/helpers/seeds");
 
-const DEFAULT_TEST_PORT = Number(process.env.CYPRESS_API_PORT || 3101);
-
 let server;
-let testPort = DEFAULT_TEST_PORT;
-
-function isPortAvailable(port) {
-  return new Promise((resolve) => {
-    const candidate = net.createServer();
-
-    candidate.once("error", () => {
-      resolve(false);
-    });
-
-    candidate.once("listening", () => {
-      candidate.close(() => resolve(true));
-    });
-
-    candidate.listen(port, "127.0.0.1");
-  });
-}
-
-async function findAvailablePort(startPort) {
-  for (let port = startPort; port < startPort + 100; port += 1) {
-    if (await isPortAvailable(port)) {
-      return port;
-    }
-  }
-
-  throw new Error(`Nenhuma porta livre encontrada a partir de ${startPort}.`);
-}
+const API_PORT = 3000;
+const WEB_PORT = 4000;
 
 async function ensureServer() {
   if (server) {
@@ -55,7 +27,7 @@ async function ensureServer() {
   resetDatabase();
 
   server = await new Promise((resolve, reject) => {
-    const startedServer = app.listen(testPort, "127.0.0.1", () => resolve(startedServer));
+    const startedServer = app.listen(API_PORT, "127.0.0.1", () => resolve(startedServer));
     startedServer.once("error", reject);
   });
 
@@ -96,15 +68,16 @@ function createSeedTaskMap() {
 }
 
 module.exports = defineConfig({
-  allowCypressEnv: false,
+  allowCypressEnv: true,
   e2e: {
-    baseUrl: `http://127.0.0.1:${DEFAULT_TEST_PORT}`,
+    baseUrl: `http://localhost:${WEB_PORT}`,
+    env: {
+      apiUrl: `http://localhost:${API_PORT}/api`
+    },
     experimentalRunAllSpecs: true,
     supportFile: "tests/cypress/support/e2e.js",
     specPattern: "tests/cypress/e2e/**/*.cy.js",
     async setupNodeEvents(on, config) {
-      testPort = await findAvailablePort(DEFAULT_TEST_PORT);
-      config.baseUrl = `http://127.0.0.1:${testPort}`;
       await ensureServer();
 
       on("task", {

@@ -37,10 +37,17 @@ function seed() {
   db.users.push(
     createClinicUserModel({
       id: nextId("users"),
-      name: "Administrador Padrão",
+      name: "Administrador Padrao",
       email: "admin@clinica.local",
       role: "ADMIN",
       passwordHash: hashPassword("Admin@123")
+    }),
+    createClinicUserModel({
+      id: nextId("users"),
+      name: "Recepcao Padrao",
+      email: "recepcao@clinica.local",
+      role: "RECEPTIONIST",
+      passwordHash: hashPassword("Recepcao@123")
     })
   );
 }

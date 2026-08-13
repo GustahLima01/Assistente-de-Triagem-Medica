@@ -38,7 +38,7 @@ describe("POST /api/auth/login", () => {
       expectApiError(response, 401, "INVALID_CREDENTIALS");
 
       cy.dbSnapshot().then((db) => {
-        expect(db.users).to.have.length(1);
+        expect(db.users).to.have.length(2);
       });
     });
   });

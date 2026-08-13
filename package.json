@@ -6,12 +6,16 @@
   "scripts": {
     "start": "node src/server.js",
     "dev": "node --watch src/server.js",
+    "start:web": "node frontend/server.js",
+    "dev:web": "node --watch frontend/server.js",
+    "start:test-stack": "node scripts/start-test-stack.js",
     "test": "npm run test:unit && npm run test:functional",
     "test:unit": "mocha \"tests/{services,utils}/**/*.test.js\"",
-    "test:functional": "cypress run --e2e --browser electron",
-    "test:functional:headed": "cypress run --e2e --browser electron --headed",
-    "test:functional:open": "cypress open",
-    "test:functional:report": "cypress run --e2e --browser electron",
+    "test:functional": "start-server-and-test start:test-stack http://localhost:4000 \"cypress run --e2e --browser electron\"",
+    "test:functional:headed": "start-server-and-test start:test-stack http://localhost:4000 \"cypress run --e2e --browser electron --headed\"",
+    "test:functional:open": "start-server-and-test start:test-stack http://localhost:4000 \"cypress open --e2e --config baseUrl=http://localhost:4000 --env apiUrl=http://localhost:3000/api\"",
+    "test:frontend:open": "npm run test:functional:open",
+    "test:functional:report": "start-server-and-test start:test-stack http://localhost:4000 \"cypress run --e2e --browser electron\"",
     "test:performance": "node tests/performance/run-performance.js",
     "test:performance:auth-login": "k6 run tests/performance/auth-login.k6.js",
     "test:performance:triage-specialty-consult": "k6 run tests/performance/triage-specialty-consult.k6.js",
@@ -36,6 +40,8 @@
     "cypress": "^15.14.2",
     "mocha": "^11.7.5",
     "proxyquire": "^2.1.3",
-    "sinon": "^21.1.2"
+    "sinon": "^21.1.2",
+    "start-server-and-test": "^3.0.12",
+    "supertest": "^7.2.2"
   }
 }

@@ -19,7 +19,7 @@ function apiRequest(method, path, { token, body } = {}) {
   return cy
     .request({
       method,
-      url: path,
+      url: `${Cypress.env("apiUrl")}${path.replace(/^\/api/, "")}`,
       headers,
       body,
       failOnStatusCode: false,

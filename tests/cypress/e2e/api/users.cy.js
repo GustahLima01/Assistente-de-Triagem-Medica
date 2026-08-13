@@ -116,7 +116,7 @@ describe("Users API", () => {
         expect(response.body.data.active).to.equal(false);
 
         cy.dbSnapshot().then((db) => {
-          expect(db.users).to.have.length(2);
+      expect(db.users).to.have.length(3);
         });
       });
     });

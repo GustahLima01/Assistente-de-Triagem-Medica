@@ -2,10 +2,15 @@
 node_modules/
 
 # Ferramentas e espelhos locais
-# A pasta wiki/ e a fonte oficial da documentacao e deve permanecer versionada.
 # A pasta .wiki-publish/ e apenas um clone auxiliar para publicar a GitHub Wiki.
 .codex/
 .wiki-publish/
+.worktrees/
+
+# Artefatos locais do Cypress e perfis temporarios do navegador
+.cypress-cache/
+.cypress-system/
+.tmp-chrome-*/
 
 # Arquivos de ambiente
 .env
@@ -23,6 +28,10 @@ mochawesome-report/
 mochawesome.json
 tests/cypress/screenshots/
 tests/cypress/videos/
+
+# Materiais locais de modelagem QA nao publicados no repositorio
+casos_teste_*.csv
+wiki/
 
 # Arquivos do sistema operacional
 .DS_Store

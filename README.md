@@ -13,7 +13,6 @@ Permitir que usuarios autenticados da clinica realizem:
 - consulta de especialidade medica com base nos sintomas
 - registro de triagem
 - agendamento de consultas
-- reagendamento e cancelamento de consultas
 
 ## Tecnologias
 
@@ -21,20 +20,27 @@ Permitir que usuarios autenticados da clinica realizem:
 - Express
 - JWT com `jsonwebtoken`
 - Swagger UI com `swagger-ui-express`
-- Cypress
+- OpenAPI
 - Mocha
+- Supertest
 - Chai
+- Mochawesome
 - K6
+- GitHub Actions
 - banco de dados em memoria
 
 ## Estrutura
 
 ```text
-cypress.config.js
+.github/
+  workflows/
+    ci.yml
 package.json
 package-lock.json
 README.md
 src/
+  app.js
+  server.js
   controllers/
   data/
   middlewares/
@@ -45,15 +51,23 @@ src/
 resources/
   swagger.json
 tests/
+  appointments/
+  auth/
   cypress/
     e2e/
-      api/
+      journeys/
+      ui/
     support/
+  doctors/
   fixtures/
   helpers/
+  patients/
   performance/
     lib/
   services/
+  symptoms/
+  triages/
+  users/
   utils/
 wiki/
   documentacao funcional e casos de teste
@@ -81,14 +95,17 @@ npm install
 npm start
 ```
 
-Ao subir com `npm start`, a aplicacao carrega automaticamente:
+Aplicacao web:
 
-- 1 usuario admin inicial
-- 18 medicos
-- 72 sintomas
-- 10 pacientes
-- 5 triagens
-- 5 agendamentos
+```bash
+npm run start:web
+```
+
+URLs locais:
+
+- API: `http://localhost:3000/api`
+- Swagger UI: `http://localhost:3000/api/docs`
+- Frontend web: `http://localhost:4000`
 
 ## Como testar
 
@@ -101,10 +118,20 @@ Comandos disponiveis:
 ```bash
 npm run test:unit
 npm run test:functional
-npm run test:functional:headed
-npm run test:functional:open
 npm run test:functional:report
+npm run test:api:cypress
+npm run test:api:cypress:headed
+npm run test:cypress:all
+npm run test:cypress:all:headed
+npm run test:cypress:open
+npm run test:frontend
+npm run test:frontend:headed
+npm run test:frontend:open
 npm run test:performance
+npm run test:performance:auth-login
+npm run test:performance:triage-specialty-consult
+npm run test:performance:appointments-create
+npm run test:performance:reception-journey
 ```
 
 A suite atual cobre testes unitarios para:
@@ -126,13 +153,35 @@ A suite funcional cobre os endpoints:
 - `GET|POST|PUT|DELETE /api/symptoms`
 - `POST /api/triages/specialty-consult`
 - `GET|POST /api/triages`
-- `GET|POST|PUT|DELETE /api/appointments`
+- `GET|POST /api/appointments`
 
-Os testes funcionais e E2E agora usam `Cypress`, com a API subindo automaticamente em uma porta de teste e a base em memoria sendo reiniciada antes de cada caso via `cy.task`.
+Os testes unitarios continuam usando `Mocha` e `Chai`. A suite funcional de API foi migrada para `Cypress`, usando `cy.request()` e uma base em memoria reiniciada antes de cada cenario. Os comandos `test:functional` e `test:functional:report` permanecem disponiveis para comparacao com a suite Mocha legada.
 
-Observacao importante da migracao:
+A suite frontend usa `Cypress` para validar navegacao pelas telas do menu, operacoes principais de cadastro e a jornada E2E de atendimento, triagem e agendamento no frontend web.
 
-- o caso `US11 CT04: rejeita atualizacao ao remover a especialidade do sintoma` permanece falhando de proposito para continuar expondo o bug atual da aplicacao
+Suite de API com Cypress:
+
+- `npm run test:api:cypress`: executa os 84 cenarios funcionais de API em modo headless
+- `npm run test:api:cypress:headed`: executa os cenarios de API com o navegador visivel
+- A stack de testes usa a API na porta `3000` e o frontend na porta `4000`
+- O cenario conhecido `US11 CT04: rejeita atualizacao ao remover a especialidade do sintoma` deve permanecer falhando
+
+Para executar automaticamente todos os testes Cypress (`api`, `ui` e `journeys`) sem cliques, use `npm run test:cypress:all`. Para executar com o navegador visivel, use `npm run test:cypress:all:headed`. Ambos iniciam a stack de testes com a API na porta `3000` e o frontend na porta `4000`.
+
+Para abrir o Cypress Playground e depurar os specs interativamente, execute `npm run test:cypress:open`. O Playground exige a acao manual `Run all specs` para executar todos os arquivos; o comando anterior `npm run test:frontend:open` permanece como alias.
+
+Fluxo frontend automatizado:
+
+- login com perfis `ADMIN` e `RECEPTIONIST`
+- validacao de todas as telas do menu
+- cadastros principais de pacientes, medicos, sintomas e usuarios
+- jornada E2E iniciando no botao `Atender`, passando pela triagem e concluindo no agendamento do mesmo dia
+- manutencao do cenario conhecido `US11 CT04: rejeita atualizacao ao remover a especialidade do sintoma`
+
+Relatorio funcional:
+
+- HTML: `reports/api-tests/index.html`
+- JSON: `reports/api-tests/index.json`
 
 Estrutura de performance:
 
@@ -198,7 +247,6 @@ k6 run tests/performance/reception-journey.k6.js -e BASE_URL=http://localhost:30
 Observacoes da automacao:
 
 - existe 1 caso funcional marcado como pendente por lacuna de especificacao na wiki: `US19 CT03`
-- existe 1 bug conhecido exposto pela automacao: a edicao de sintoma aceita remover `specialty`, contrariando `US11 CT04`
 
 Servidor padrao:
 
@@ -229,6 +277,11 @@ Usuario inicial para bootstrap:
 - email: `admin@clinica.local`
 - senha: `Admin@123`
 
+Usuario operacional para o fluxo web:
+
+- email: `recepcao@clinica.local`
+- senha: `Recepcao@123`
+
 ## Perfis e permissoes
 
 - `ADMIN`: gerencia usuarios, medicos, sintomas, pacientes, triagens e agendamentos
@@ -242,8 +295,6 @@ Usuario inicial para bootstrap:
 - consulta de especialidade considera os sintomas informados e o peso da gravidade
 - agendamento valida conflito de horario por medico
 - agendamento com `triageId` valida compatibilidade entre especialidade sugerida e especialidade do medico
-- agendamentos com status `SCHEDULED` podem ser editados para reagendamento ou ajuste de observacoes
-- cancelamento de consulta e logico, alterando o status do agendamento para `CANCELLED`
 - dados sao reiniciados quando a aplicacao e reiniciada
 
 ## Endpoints principais
@@ -264,7 +315,7 @@ Usuario inicial para bootstrap:
 - `GET|POST /api/triages`
 - `GET /api/triages/:id`
 - `GET|POST /api/appointments`
-- `GET|PUT|DELETE /api/appointments/:id`
+- `GET /api/appointments/:id`
 
 ## Formato de resposta
 
